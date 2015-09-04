@@ -1,6 +1,13 @@
 /**
  * Created by Александр on 05.05.14.
  */
+
+    /**
+     * Проверяет является ли строка JSON-объектом
+     *
+     * @param str - проверяемая строка
+     * @returns {*}
+     */
     function isJSON(str) {
         try {
             var result = JSON.parse(str);
@@ -10,6 +17,15 @@
         return result;
     }
 
+    /**
+     * AJAX-запрос к серверу
+     *
+     * @param params - параметры запроса к серверу
+     * @param async - асинхронный ли запрос отправлять
+     * @param type - тип запроса, GET, POST и т. п.
+     * @param callback - обработчик успешного завершения запроса
+     * @param callbackError - обработчик ошибочного завершения запроса
+     */
     function request (params, async, type, callback, callbackError)
     {
         if (callbackError)
@@ -42,7 +58,7 @@
                     }
                     else
                     {
-                        //Сообщение об успешном запросе
+                        //Сообщение об успешном запросе при отсутствии обработчика
                     }
                 }
                 else
@@ -57,6 +73,14 @@
         });
     }
 
+    /**
+     * Вставить в шаблон несколько однородных записей (при этом на каждую запись создается копия DOM-объекта-родителя)
+     *
+     * @param data - данные для вставки
+     * @param parent - DOM-объект в который нужно вставить данные
+     *
+     * @returns {XML|*}
+     */
     function setMultiData(data, parent)
     {
         if (data)
@@ -80,6 +104,14 @@
         return parent.parent();
     }
 
+    /**
+     * Вставить данные в DOM-объект шаблона
+     *
+     * @param data - данные для вставки
+     * @param parent - DOM-объект
+     *
+     * @returns {*}
+     */
     function setData (data, parent)
     {
         if (data)
