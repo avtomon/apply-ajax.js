@@ -28,7 +28,7 @@
      * Умная обертка к Ajax-запросу к серверу
      *
      * @param params - параметры запроса к серверу
-     * @param async - асинхронно ли отправляться запрос?
+     * @param async - асинхронно ли отправлять запрос?
      * @param type - тип запроса (обычно GET или POST)
      *
      * @param callback - функция, отрабатывающая при успешном запросе
@@ -36,11 +36,7 @@
      */
     function request (params, async, type, callback, callbackError)
     {
-        params.get_instance = params.get_instance || false;
-        params.static_method = params.static_method || false;
-        params.pagecache_flush = params.pagecache_flush || false;
-
-        var error = callbackError ? callbackError : window.error || null;
+        var error = callbackError ? callbackError : window.error || alert;
 
         $.ajax({
             type: type,
@@ -96,7 +92,8 @@
 
             if (typeof(data) === 'object')
             {
-                for(var j in parent)
+                var len = parent.length;
+                for(var j = 0; j < len; j++)
                 {
                     var p = parent.eq(j).addClass(HIDE_CLASS);
                     for (var i in data)
