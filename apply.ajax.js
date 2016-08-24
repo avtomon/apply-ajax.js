@@ -142,7 +142,7 @@
                     }
                     if (typeof(data[objkey]) === 'object' && data[objkey] !== null)
                     {
-                        setMultiData(data[objkey], parent.find('.' + objkey + '.parent'));
+                        setMultiData(data[objkey], parent.find('.' + objkey));
                     }
                     else
                     {
