@@ -11,7 +11,7 @@
      *
      * @returns {boolean}
      */
-    function isJSON(str)
+    function isJSON (str)
     {
         try
         {
@@ -36,6 +36,10 @@
      */
     function request (params, async, type, callback, callbackError)
     {
+        params.get_instance = params.get_instance || false;
+        params.static_method = params.static_method || false;
+        params.pagecache_flush = params.pagecache_flush || false;
+
         var error = callbackError ? callbackError : window.error || alert;
 
         $.ajax({
@@ -82,7 +86,7 @@
      *
      * @returns {*}
      */
-    function setMultiData(data, parent)
+    function setMultiData (data, parent)
     {
         if (data && data.success !== undefined)
         {
