@@ -1,239 +1,159 @@
-/**
- * Created by Александр on 05.05.14.
- */
+$(function () {
+    "use strict";
 
-const HIDE_CLASS = 'clone';
+    const HIDE_CLASS = 'clone';
 
-/**
- * Проверка и парсинг JSON-строки
- *
- * @param str - json-строка
- *
- * @returns {boolean}
- */
-function isJSON(str) {
-  try {
-    var result = JSON.parse(str);
-  }
-  catch (e) {
-    return false;
-  }
-  return result;
-}
-
-/**
- * Умная обертка к Ajax-запросу к серверу
- *
- * @param url - адрес обработки
- * @param params - параметры запроса к серверу
- * @param async - асинхронно ли отправлять запрос?
- * @param type - тип запроса (обычно GET или POST)
- *
- * @param callback - функция, отрабатывающая при успешном запросе
- * @param callbackError - функция, отрабатывающая при ошибочном результате запроса
- */
-function request(url, params, async, type, callback, callbackError) {
-  params.get_instance = params.get_instance || 0;
-  params.static_method = params.static_method || 0;
-  params.pagecache_flush = params.pagecache_flush || 0;
-
-  var error = callbackError ? callbackError : window.error || alert;
-
-  $.ajax(url, {
-    type: type,
-    dataType: 'json',
-    data: params,
-    async: async,
-    success: function (data) {
-      if (data.error !== undefined) {
-        error('Произошла ошибка: ' + data.error);
-      }
-      else if (data.redirect) {
-        window.location = data.redirect;
-      }
-      else if (data.success !== undefined) {
-        callback ? callback(data) : (window.showOk ? showOk('Запрос успешно выполнен') : null);
-      }
-      else {
-        error('Произошла ошибка');
-      }
-    },
-    error: function (XMLHttpRequest, textStatus) {
-      error('Произошла ошибка ' + textStatus);
-    }
-  });
-}
-
-/**
- * Запилить данные в шаблон. При этом исходные элементы для вставки остаются неизменными и становятся невидимыми, в том время как данные
- * вставляются в их видимые копии, которые создаются перед вставкой
- *
- * @param data - данные для вставки
- * @param parent - jQuery-селектор блоков для вставки
- *
- * @returns {*}
- */
-function setMultiData(data, parent) {
-  if (data && data.success !== undefined) {
-    data = data.success;
-
-    if (typeof(data) === 'object') {
-      var len = parent.length;
-      for (var j = 0; j < len; j++) {
-        var p = parent.eq(j).addClass(HIDE_CLASS);
-        for (var i in data) {
-          setData(data[i], p.clone(true).appendTo(p.parent()));
+    /**
+     * Умная обертка к Ajax-запросу к серверу
+     *
+     * @param url - адрес обработки
+     * @param params - параметры запроса к серверу
+     * @param async - асинхронно ли отправлять запрос?
+     * @param type - тип запроса (обычно GET или POST)
+     *
+     * @param callback - функция, отрабатывающая при успешном запросе
+     * @param callbackError - функция, отрабатывающая при ошибочном результате запроса
+     */
+    function request(url, params, async, type, callback, callbackError)
+    {
+        if (!url) {
+            return false;
         }
-      }
+        params.pagecache_flush = params.pagecache_flush || 0;
+
+        let error = callbackError ? callbackError : alert;
+
+        $.ajax(url, {
+            type: type || 'GET',
+            dataType: 'json',
+            data: params,
+            async: async || true,
+            success: function (data) {
+                if (data.error !== undefined) {
+                    error('Произошла ошибка: ' + data.error);
+                } else if (data.redirect) {
+                    window.location = data.redirect;
+                } else if (data.success !== undefined) {
+                    callback ? callback(data) : alert('Запрос успешно выполнен');
+                } else {
+                    error('Произошла ошибка');
+                }
+            },
+            error: function (XMLHttpRequest, textStatus) {
+                error('Произошла ошибка: ' + textStatus);
+            }
+        });
     }
-  }
-  return parent.eq(0).parent();
-}
 
-/**
- * Запилить данные в шаблон. В отличие от предыдущей функции, здесь данные вставляются прямо в выбранные селектором элементы
- *
- * @param data - данные для вставки
- * @param parent - jQuery-селектор блоков для вставки
- *
- * @returns {*}
- */
-function setData(data, parent) {
-  if (data) {
-    if (data.success)
-      data = data.success;
+    /**
+     * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key
+     *
+     * @param {string} key - ключ для маркеров вставки
+     * @param {string} value - значение для вставки
+     *
+     * @returns {jQuery|boolean}
+     */
+    $.fn.modifyElement = function (key, value)
+    {
+        let self = $(this),
+            matches = [],
+            mask = new RegExp('in_(.+?)_' + key, 'g'),
+            overlap;
 
-    if (!data.error && typeof(data) === 'object') {
-      if (data[0] !== undefined)
-        data = data[0];
-
-      parent.removeClass(HIDE_CLASS);
-
-      var objkeys = Object.keys(data),
-        len = objkeys.length;
-
-      for (var i = 0; i < len; i++) {
-        var objkey = objkeys[i],
-          tmp = isJSON(data[objkey]);
-
-        if (tmp && tmp.length) {
-          data[objkey] = tmp;
+        while (!(overlap = mask.exec(self.attr('class')))) {
+            matches.push(overlap[1]);
         }
-        if (typeof(data[objkey]) === 'object' && data[objkey] !== null) {
-          setMultiData(data[objkey], parent.find('.' + objkey));
+
+        if (!matches.length) {
+            return false;
         }
-        else {
-          if (parent.hasClass('in_id_' + objkey)) {
-            parent.attr('id', data[objkey]);
-          }
-          if (parent.hasClass('in_name_' + objkey)) {
-            parent.attr('name', data[objkey]);
-          }
-          if (parent.hasClass('in_class_' + objkey)) {
-            parent.addClass(data[objkey].toString());
-          }
-          if (parent.hasClass('in_val_' + objkey) || parent.hasClass('in_value_' + objkey)) {
-            parent.val(data[objkey]);
-          }
-          if (parent.hasClass('in_title_' + objkey)) {
-            parent.attr('title', data[objkey]);
-          }
-          if (parent.hasClass('in_text_' + objkey)) {
-            parent.html(data[objkey]);
-          }
-          if (parent.hasClass('in_href_' + objkey)) {
-            parent.attr('href', parent.attr('href') ? parent.attr('href') + data[objkey] : data[objkey]);
-          }
-          if (parent.hasClass('in_src_' + objkey) && data[objkey]) {
-            parent.attr('src', data[objkey]);
-          }
-          if (parent.hasClass('in_alt_' + objkey)) {
-            parent.attr('alt', data[objkey]);
-          }
-          if (parent.hasClass('in_data-val_' + objkey)) {
-            parent.attr('data-val', data[objkey]);
-          }
-          if (parent.hasClass('in_for_' + objkey)) {
-            parent.attr('for', data[objkey]);
-          }
-          if (parent.hasClass('in_type_' + objkey)) {
-            parent.attr('type', data[objkey]);
-          }
-          if (parent.hasClass('in_prop_' + objkey)) {
-            parent.prop(data[objkey], true);
-          }
 
+        let insertValue = function (label) {
+            let i = $.inArray(label, matches);
+            if (i >= 0) {
+                delete matches[i];
+                return true;
+            } else {
+                return false;
+            }
+        };
 
-          if (parent.find('.in_id_' + objkey).length) {
-            parent.find('.in_id_' + objkey).attr('id', data[objkey]);
-          }
-          if (parent.find('.in_name_' + objkey).length) {
-            parent.find('.in_name_' + objkey).attr('name', data[objkey]);
-          }
-          if (parent.find('.in_class_' + objkey).length) {
-            parent.find('.in_class_' + objkey).addClass(data[objkey].toString());
-          }
-          if (parent.find('.in_val_' + objkey).length || parent.find('.in_value_' + objkey).length) {
-            parent.find('.in_val_' + objkey + ', .in_value_' + objkey).val(data[objkey]);
-          }
-          if (parent.find('.in_title_' + objkey).length) {
-            parent.find('.in_title_' + objkey).attr('title', data[objkey]);
-          }
-          if (parent.find('.in_text_' + objkey).length) {
-            parent.find('.in_text_' + objkey).html(data[objkey]);
-          }
-          if (parent.find('.in_href_' + objkey).length) {
-            if (parent.find('.in_href_' + objkey).attr('href') === undefined)
-              parent.find('.in_href_' + objkey).attr('href', '');
-            parent.find('.in_href_' + objkey).attr('href', parent.find('.in_href_' + objkey).attr('href') + data[objkey]);
-          }
-          if (parent.find('.in_src_' + objkey).length && data[objkey]) {
-            parent.find('.in_src_' + objkey).attr('src', data[objkey]);
-          }
-          if (parent.find('.in_alt_' + objkey).length) {
-            parent.find('.in_alt_' + objkey).attr('alt', data[objkey]);
-          }
-          if (parent.find('.in_data-val_' + objkey).length) {
-            parent.find('.in_data-val_' + objkey).attr('data-val', data[objkey]);
-          }
-          if (parent.find('.in_for_' + objkey).length) {
-            parent.find('.in_for_' + objkey).attr('for', data[objkey]);
-          }
-          if (parent.find('.in_type_' + objkey).length) {
-            parent.find('.in_type_' + objkey).attr('type', data[objkey]);
-          }
-          if (parent.find('.in_prop_' + objkey).length) {
-            parent.find('.in_prop_' + objkey).prop(data[objkey], true);
-          }
+        if(insertValue('text')) {
+            self.html(value);
         }
-      }
-    }
 
-    return parent;
-  }
-  else {
-    return false;
-  }
-}
+        if(insertValue('class')) {
+            self.addClass(value);
+        }
 
-/**
- * Использовать один из двух предудущих методов вставки изходя из присутствия в старших тегах блоков для вставки класса, отвечающего
- * за сокрытие эталонных блоков (HIDE_CLASS)
- *
- * @param data - данные для вставки
- * @param parent - jQuery-селектор блоков для вставки
- *
- * @returns {boolean}
- */
-function insertData(data, parent) {
-  for (var j in parent) {
-    var p = parent.eq(j);
-    if (p.hasClass(HIDE_CLASS)) {
-      setMultiData(data, p);
+        if(insertValue('val') || insertValue('val')) {
+            self.val(value);
+        }
+
+        matches.forEach( function () {
+            self.attr(this, value);
+        });
+
+        return self;
+    };
+
+    /**
+     * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,
+     * а исходный скрыть, иначе просто вставить данные в шаблон
+     *
+     * @param {object} data - данные для вставки
+     *
+     * @returns {jQuery|boolean}
+     */
+    $.fn.setMultiData = function (data)
+    {
+        let self = $(this);
+        if (!data.success || !data.success.length) {
+            return false;
+        }
+
+        data = data.success;
+
+        if (!this.hasClass(HIDE_CLASS)) {
+            return self.setData(data);
+        }
+
+        if (!data[0]) {
+            data[0] = data;
+        }
+
+        this.addClass(HIDE_CLASS);
+        data.forEach( function() {
+            self.clone(true).appendTo(self.parent()).setData(this);
+        });
+
+        return self;
+    };
+
+    /**
+     * Вставить набор данных в шаблон, предполагается что на вход дается только один кортеж данных
+     *
+     * @param data - данные для вставки
+     *
+     * @returns {jQuery|boolean}
+     */
+    $.fn.setData = function (data)
+    {
+        let self = $(this);
+
+        if (!data || !data.length) {
+            return false;
+        }
+
+        if (data.success) data = data.success;
+        if (data[0]) data = data[0];
+
+        self.removeClass(HIDE_CLASS);
+
+        for (let prop in data) {
+            if (data.hasOwnProperty(prop)) self.modifyElement(prop, data[prop]);
+        }
+
+        return self;
     }
-    else {
-      setData(data, p);
-    }
-  }
-  return true;
-}
+});
