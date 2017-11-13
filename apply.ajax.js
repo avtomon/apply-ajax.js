@@ -2,6 +2,7 @@ $(function () {
     "use strict";
 
     const HIDE_CLASS = 'clone';
+    const HOST = 'http://192.168.0.143';
 
     /**
      * Умная обертка к Ajax-запросу к серверу
@@ -19,39 +20,71 @@ $(function () {
         if (!url) {
             return false;
         }
-        params.pagecache_flush = params.pagecache_flush || 0;
+        params.append('pagecache_flush', params.pagecache_flush || 0);
 
-        let error = callbackError ? callbackError : alert;
+        let d = $.Deferred(),
+            error = callbackError ? callbackError : alert;
 
-        $.ajax(url, {
+        $.ajax(HOST + url, {
             type: type || 'GET',
             dataType: 'json',
+            contentType: false,
+            processData: false,
             data: params,
             async: async ? true : false,
             success: function (data) {
                 if (data.error !== undefined) {
                     error('Произошла ошибка: ' + data.error);
+                    d.reject();
                 } else if (data.redirect) {
                     window.location = data.redirect;
                 } else if (data.success !== undefined) {
                     callback ? callback(data) : alert('Запрос успешно выполнен');
+                    d.resolve();
                 } else {
                     error('Произошла ошибка');
+                    d.reject();
                 }
             },
             error: function (XMLHttpRequest, textStatus) {
                 error('Произошла ошибка: ' + textStatus);
+                d.reject();
             }
         });
+
+        return d.promise();
     }
 
-    $.fn.submit( function (callback, callbackError) {
-        if (this.is('form')) {
+    $.fn.ajaxSubmit = function (before, callback, callbackError, after) {
+        if (!this.is('form')) {
             return false;
         }
 
-        request(this.attr('action'), new FormData(this), true, f.attr('type'), callback, callbackError);
-    });
+        let f = $(this),
+            d = $.Deferred( function () {
+            if (!before) {
+                this.resolve();
+                return;
+            }
+
+            if (before()) {
+                this.resolve();
+            } else {
+                this.reject();
+            }
+
+            this.done(request(
+                f.attr('action'),
+                new FormData(f[0]),
+                true,
+                f.attr('method'),
+                callback,
+                callbackError)
+                .always(after))
+        });
+
+        return d.promise();
+    };
 
     /**
      * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key
