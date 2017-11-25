@@ -20,7 +20,7 @@ $(function () {
         if (!url) {
             return false;
         }
-        params.append('pagecache_flush', params.pagecache_flush || 0);
+        //params.append('pagecache-flush', params.pagecache-flush || 0);
 
         let d = $.Deferred(),
             error = callbackError ? callbackError : alert;
