@@ -2,7 +2,7 @@ $(function () {
     "use strict";
 
     const HIDE_CLASS = 'clone';
-    const HOST = 'http://192.168.0.143';
+    const HOST = 'http://private.futuredu-test.ru';
 
     /**
      * Умная обертка к Ajax-запросу к серверу
@@ -20,7 +20,7 @@ $(function () {
         if (!url) {
             return false;
         }
-        //params.append('pagecache-flush', params.pagecache-flush || 0);
+        //params.append('XDEBUG_SESSION', 'PHPSTORM');
 
         let d = $.Deferred(),
             error = callbackError ? callbackError : alert;
@@ -38,12 +38,9 @@ $(function () {
                     d.reject();
                 } else if (data.redirect) {
                     window.location = data.redirect;
-                } else if (data.success !== undefined) {
+                } else {
                     callback ? callback(data) : alert('Запрос успешно выполнен');
                     d.resolve();
-                } else {
-                    error('Произошла ошибка');
-                    d.reject();
                 }
             },
             error: function (XMLHttpRequest, textStatus) {
