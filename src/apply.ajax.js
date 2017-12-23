@@ -1,8 +1,44 @@
-$(function () {
-    "use strict";
+(function ($) {
+    'use strict';
 
-    const HIDE_CLASS = 'clone';
-    const HOST = 'http://private.futuredu-test.ru';
+    let applyAjax = $.applyAjax = {},
+        HIDE_CLASS = 'clone',
+        HOST = location.origin,
+        ALLOWED_ATTRS = ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'];
+
+    /**
+     * Конструктор
+     *
+     * @param {string} HOST - хост на который будут отправляться запросы
+     * @param {string} HIDE_CLASS - класс-метка для вставки массива записей
+     * @param {string} ALLOWED_ATTRS - какие атрибуты разрешено вставлять в HTML-элементы
+     */
+    applyAjax.init = function (settings = {})
+    {
+        HOST = settings.HOST || HOST;
+        HIDE_CLASS = settings.HIDE_CLASS || HIDE_CLASS;
+        ALLOWED_ATTRS = settings.ALLOWED_ATTRS || ALLOWED_ATTRS;
+    }
+
+    /**
+     * Является ли входное значение JSON-структурой
+     *
+     * @param str - проверяемое значение
+     *
+     * @returns {boolean}
+     */
+    function isJson(str) {
+        try {
+            let json = JSON.parse(str);
+            if (json instanceof Object) {
+                return true;
+            }
+        } catch (e) {
+
+        }
+
+        return false;
+    }
 
     /**
      * Умная обертка к Ajax-запросу к серверу
@@ -11,11 +47,10 @@ $(function () {
      * @param {object} params - параметры запроса к серверу
      * @param {bool} async - асинхронно ли отправлять запрос?
      * @param {string} type - тип запроса (обычно GET или POST)
-     *
      * @param {function} callback - функция, отрабатывающая при успешном запросе
      * @param {function} callbackError - функция, отрабатывающая при ошибочном результате запроса
      */
-    function request(url, params, async, type, callback, callbackError)
+    applyAjax.request = function(url, params, async, type, callback, callbackError, processData = true)
     {
         if (!url) {
             return false;
@@ -25,19 +60,24 @@ $(function () {
         let d = $.Deferred(),
             error = callbackError ? callbackError : alert;
 
-        $.ajax(HOST + url, {
+        $.ajax(HOST + url + '?XDEBUG_SESSION_START=PHPSTORM', {
             type: type || 'GET',
-            dataType: 'json',
             contentType: false,
-            processData: false,
+            processData: processData,
             data: params,
             async: async ? true : false,
             success: function (data) {
-                if (data.error !== undefined) {
-                    error('Произошла ошибка: ' + data.error);
-                    d.reject();
-                } else if (data.redirect) {
-                    window.location = data.redirect;
+                if (isJson(data)) {
+                    data = JSON.parse(data);
+                    if (data.error !== undefined) {
+                        error(data.error);
+                        d.reject();
+                    } else if (data.redirect) {
+                        window.location = data.redirect;
+                    } else {
+                        callback ? callback(data) : alert('Запрос успешно выполнен');
+                        d.resolve();
+                    }
                 } else {
                     callback ? callback(data) : alert('Запрос успешно выполнен');
                     d.resolve();
@@ -52,53 +92,80 @@ $(function () {
         return d.promise();
     }
 
-    $.fn.ajaxSubmit = function (before, callback, callbackError, after) {
-        if (!this.is('form')) {
+    /**
+     * Ajax-отправка формы
+     *
+     * @param {jQuery} - Форма, которую отправляем
+     * @param {function} before - функция, выполняемая перед отправкой
+     * @param {function} callback - коллбэк успешной отправки формы
+     * @param {function} callbackError - коллбэк неудачной отправки формы
+     * @param {function} after - эта функция выполняется полсе отправки формы (успешной либо нет)
+     * @returns {*}
+     */
+    applyAjax.ajaxSubmit = function (object, before, callback, callbackError, after) {
+        if (!object.is('form')) {
             return false;
         }
 
-        let f = $(this),
-            d = $.Deferred( function () {
-            if (!before) {
-                this.resolve();
-                return;
-            }
+        let d = $.Deferred( function () {
+                if (!before) {
+                    this.resolve();
+                    return;
+                }
 
-            if (before()) {
-                this.resolve();
-            } else {
-                this.reject();
-            }
+                if (before()) {
+                    this.resolve();
+                } else {
+                    this.reject();
+                }
 
-            this.done(request(
-                f.attr('action'),
-                new FormData(f[0]),
-                true,
-                f.attr('method'),
-                callback,
-                callbackError)
-                .always(after))
-        });
+                this.done(applyAjax.request(
+                    object.attr('action'),
+                    new FormData(f[0]),
+                    true,
+                    object.attr('method'),
+                    callback,
+                    callbackError,
+                    false
+                ).always(after))
+            });
 
         return d.promise();
     };
 
     /**
+     * Проверка на наличеие метки вставки
+     *
+     * @param {string} label
+     * @param {array} matches
+     * @returns {boolean}
+     */
+    function isInsertable(label, matches) {
+        let i = $.inArray(label, matches);
+        if (i >= 0) {
+            delete matches[i];
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    /**
      * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key
      *
+     * @param {jQuery} - Объект, в который вставляем
      * @param {string} key - ключ для маркеров вставки
      * @param {string} value - значение для вставки
      *
      * @returns {jQuery|boolean}
      */
-    $.fn.modifyElement = function (key, value)
+    function modifyElement(object, key, value)
     {
-        let self = this,
-            matches = [],
-            mask = new RegExp('in_(.+?)_' + key, 'g'),
+        let matches = [],
+            mask = new RegExp('in_(' + ALLOWED_ATTRS.join('|') + ')_' + key, 'g'),
             overlap;
 
-        while (!(overlap = mask.exec(self.attr('class')))) {
+        while (overlap = mask.exec(object.attr('class'))) {
             matches.push(overlap[1]);
         }
 
@@ -106,65 +173,55 @@ $(function () {
             return false;
         }
 
-        let isInsertable = function (label) {
-            let i = $.inArray(label, matches);
-            if (i >= 0) {
-                delete matches[i];
-                return true;
-            } else {
-                return false;
-            }
-        };
-
-        if(isInsertable('text')) {
-            self.html(value);
+        if(isInsertable('text', matches)) {
+            object.html(value);
         }
 
-        if(isInsertable('class')) {
-            self.addClass(value);
+        if(isInsertable('class', matches)) {
+            object.addClass(value);
         }
 
-        if(isInsertable('val') || insertValue('value')) {
-            self.val(value);
+        if(isInsertable('val', matches) || isInsertable('value', matches)) {
+            object.val(value);
         }
 
-        matches.forEach( function () {
-            self.attr(this, value);
+        matches.forEach(function(attr) {
+            object.attr(attr, value);
         });
 
-        return self;
+        return object;
     };
 
     /**
      * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,
      * а исходный скрыть, иначе просто вставить данные в шаблон
      *
+     * @param {jQuery} - Объект, в который вставляем
      * @param {object} data - данные для вставки
      *
      * @returns {jQuery|boolean}
      */
-    $.fn.setMultiData = function (data)
+    applyAjax.setMultiData = function (object, data)
     {
-        let self = this;
-        if (!data.success || !data.success.length) {
-            return false;
-        }
-
-        data = data.success;
-
-        if (!this.hasClass(HIDE_CLASS)) {
-            return self.setData(data);
+        if (!object.hasClass(HIDE_CLASS)) {
+            return applyAjax.setData(object, data);
         }
 
         if (!data[0]) {
             data[0] = data;
         }
 
-        data.forEach( function() {
-            self.clone(true).appendTo(self.parent()).setData(this);
+        data.forEach( function(record) {
+            applyAjax.setData(
+                object
+                    .clone(true)
+                    .appendTo(object.parent())
+                    .removeClass(HIDE_CLASS),
+                record
+            );
         });
 
-        return self;
+        return object;
     };
 
     /**
@@ -174,34 +231,39 @@ $(function () {
      *
      * @returns {jQuery|boolean}
      */
-    $.fn.setData = function (data)
+    applyAjax.setData = function (object, data)
     {
-        if (!data || !data.length) {
+        if (!data || !Object.keys(data).length) {
             return false;
         }
-
-        let self = this;
 
         if (data.success) data = data.success;
         if (data[0]) data = data[0];
 
         for (let prop in data) {
-            if (data.hasOwnProperty(prop)) {
-                self.modifyElement(prop, data[prop]);
+            if (!data.hasOwnProperty(prop)) {
+                continue;
             }
 
+            modifyElement(object, prop, data[prop]);
+
             if (data[prop] instanceof Object) {
-                self.find('.' + prop).setMultiData(data[prop]);
+                applyAjax.setMultiData(object.find('.' + prop), data[prop]);
+            } else if (isJson(data[prop])) {
+                data[prop] = JSON.parse(data[prop]);
+                applyAjax.setMultiData(object.find('.' + prop), data[prop]);
             } else {
-                self.find("*[class*=_" + prop).each( function ()
-                {
-                    $(this).modifyElement(prop, data[prop]);
+                object.find('*[class*=_' + prop + ']').filter(function() {
+                    let mask = new RegExp('in_(' + ALLOWED_ATTRS.join('|') + ')_' + prop, 'g')
+                    return $(this).attr('class').match(mask);
+                }).each( function () {
+                    modifyElement($(this), prop, data[prop]);
                 });
             }
         }
 
-        self.removeClass(HIDE_CLASS);
+        object.removeClass(HIDE_CLASS);
 
-        return self;
+        return object;
     }
-});
+}(typeof jQuery === 'function' ? jQuery : this));
