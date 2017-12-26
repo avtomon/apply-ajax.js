@@ -181,6 +181,10 @@
             object.addClass(value);
         }
 
+        if(isInsertable('href', matches)) {
+            object.attr('href', object.attr('href') + value);
+        }
+
         if(isInsertable('val', matches) || isInsertable('value', matches)) {
             object.val(value);
         }
@@ -215,8 +219,7 @@
             applyAjax.setData(
                 object
                     .clone(true)
-                    .appendTo(object.parent())
-                    .removeClass(HIDE_CLASS),
+                    .appendTo(object.parent()),
                 record
             );
         });
@@ -245,18 +248,15 @@
                 continue;
             }
 
-            modifyElement(object, prop, data[prop]);
-
             if (data[prop] instanceof Object) {
                 applyAjax.setMultiData(object.find('.' + prop), data[prop]);
             } else if (isJson(data[prop])) {
                 data[prop] = JSON.parse(data[prop]);
                 applyAjax.setMultiData(object.find('.' + prop), data[prop]);
             } else {
-                object.find('*[class*=_' + prop + ']').filter(function() {
-                    let mask = new RegExp('in_(' + ALLOWED_ATTRS.join('|') + ')_' + prop, 'g')
-                    return $(this).attr('class').match(mask);
-                }).each( function () {
+                modifyElement(object, prop, data[prop]);
+
+                object.find('*[class*=_' + prop + ']').each( function () {
                     modifyElement($(this), prop, data[prop]);
                 });
             }
