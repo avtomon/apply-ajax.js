@@ -5,5 +5,8 @@
     "minimum-stability": "stable",
     "config": {
 	      "process-timeout": 1800
+    },
+    "require": {
+    	"bower-asset/jquery": "dev-master"
     }
 }
