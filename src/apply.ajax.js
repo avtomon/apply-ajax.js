@@ -65,6 +65,9 @@
             contentType: false,
             processData: processData,
             data: params,
+            xhrFields: {
+                withCredentials: true
+            },
             async: async ? true : false,
             success: function (data) {
                 if (isJson(data)) {
@@ -73,7 +76,7 @@
                         error(data.error);
                         d.reject();
                     } else if (data.redirect) {
-                        window.location = data.redirect;
+                        //window.location = data.redirect;
                     } else {
                         callback ? callback(data) : alert('Запрос успешно выполнен');
                         d.resolve();
@@ -121,7 +124,7 @@
 
                 this.done(applyAjax.request(
                     object.attr('action'),
-                    new FormData(f[0]),
+                    new FormData(object[0]),
                     true,
                     object.attr('method'),
                     callback,
@@ -207,6 +210,10 @@
      */
     applyAjax.setMultiData = function (object, data)
     {
+        if (!data instanceof Object || !Object.keys(data).length) {
+            return false;
+        }
+
         if (!object.hasClass(HIDE_CLASS)) {
             return applyAjax.setData(object, data);
         }
@@ -236,11 +243,10 @@
      */
     applyAjax.setData = function (object, data)
     {
-        if (!data || !Object.keys(data).length) {
+        if (!data instanceof Object || !Object.keys(data).length) {
             return false;
         }
 
-        if (data.success) data = data.success;
         if (data[0]) data = data[0];
 
         for (let prop in data) {
