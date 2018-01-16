@@ -76,7 +76,7 @@
                         error(data.error);
                         d.reject();
                     } else if (data.redirect) {
-                        //window.location = data.redirect;
+                        window.location = data.redirect;
                     } else {
                         callback ? callback(data) : alert('Запрос успешно выполнен');
                         d.resolve();
@@ -98,15 +98,17 @@
     /**
      * Ajax-отправка формы
      *
-     * @param {jQuery} - Форма, которую отправляем
+     * @param {jQuery} object - Форма, которую отправляем
      * @param {function} before - функция, выполняемая перед отправкой
      * @param {function} callback - коллбэк успешной отправки формы
      * @param {function} callbackError - коллбэк неудачной отправки формы
      * @param {function} after - эта функция выполняется полсе отправки формы (успешной либо нет)
      * @returns {*}
      */
-    applyAjax.ajaxSubmit = function (object, before, callback, callbackError, after) {
-        if (!object.is('form')) {
+    applyAjax.ajaxSubmit = function (form, before, callback, callbackError, after)
+    {
+        let formData;
+        if (!form.is('form')) {
             return false;
         }
 
@@ -116,17 +118,19 @@
                     return;
                 }
 
-                if (before()) {
+                let result = before(form)
+                if (result) {
+                    formData = result instanceof FormData ? result : new FormData(form[0])
                     this.resolve();
                 } else {
                     this.reject();
                 }
 
                 this.done(applyAjax.request(
-                    object.attr('action'),
-                    new FormData(object[0]),
+                    form.attr('action'),
+                    formData,
                     true,
-                    object.attr('method'),
+                    form.attr('method'),
                     callback,
                     callbackError,
                     false
