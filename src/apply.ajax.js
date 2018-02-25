@@ -4,7 +4,8 @@
     let applyAjax = $.applyAjax = {},
         HIDE_CLASS = 'clone',
         HOST = location.origin,
-        ALLOWED_ATTRS = ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'];
+        ALLOWED_ATTRS = ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
+        DEFAULT_ERROR_CALLBACK = alert;
 
     /**
      * Конструктор
@@ -18,6 +19,7 @@
         HOST = settings.HOST || HOST;
         HIDE_CLASS = settings.HIDE_CLASS || HIDE_CLASS;
         ALLOWED_ATTRS = settings.ALLOWED_ATTRS || ALLOWED_ATTRS;
+        DEFAULT_ERROR_CALLBACK = settings.DEFAULT_ERROR_CALLBACK || DEFAULT_ERROR_CALLBACK;
     }
 
     /**
@@ -58,7 +60,7 @@
         //params.append('XDEBUG_SESSION', 'PHPSTORM');
 
         let d = $.Deferred(),
-            error = callbackError ? callbackError : alert;
+            error = callbackError ? callbackError : DEFAULT_ERROR_CALLBACK;
 
         $.ajax(HOST + url + '?XDEBUG_SESSION_START=PHPSTORM', {
             type: type || 'GET',
