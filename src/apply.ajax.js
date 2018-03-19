@@ -57,10 +57,8 @@
         if (!url) {
             return false;
         }
-        //params.append('XDEBUG_SESSION', 'PHPSTORM');
 
-        let d = $.Deferred(),
-            error = callbackError ? callbackError : DEFAULT_ERROR_CALLBACK;
+        let error = callbackError ? callbackError : DEFAULT_ERROR_CALLBACK;
 
         $.ajax(HOST + url + '?XDEBUG_SESSION_START=PHPSTORM', {
             type: type || 'GET',
@@ -76,25 +74,19 @@
                     data = JSON.parse(data);
                     if (data.error !== undefined) {
                         error(data.error);
-                        d.reject();
                     } else if (data.redirect) {
                         window.location = data.redirect;
                     } else {
                         callback ? callback(data) : alert('Запрос успешно выполнен');
-                        d.resolve();
                     }
                 } else {
                     callback ? callback(data) : alert('Запрос успешно выполнен');
-                    d.resolve();
                 }
             },
             error: function (XMLHttpRequest, textStatus) {
                 error('Произошла ошибка: ' + textStatus);
-                d.reject();
             }
         });
-
-        return d.promise();
     }
 
     /**
@@ -114,21 +106,25 @@
             return false;
         }
 
-        let d = $.Deferred( function () {
-                if (!before) {
-                    this.resolve();
-                    return;
-                }
+        let p = new Promise(function (resolve, reject) {
+            //alert(before);
+            if (!before) {
+                //resolve();
+                return;
+            }
 
-                let result = before(form)
-                if (result) {
-                    formData = result instanceof FormData ? result : new FormData(form[0])
-                    this.resolve();
-                } else {
-                    this.reject();
-                }
+            let result = before(form)
+            if (result) {
+                formData = result instanceof FormData ? result : new FormData(form[0])
+                resolve();
+            } else {
+                reject();
+            }
+        });
 
-                this.done(applyAjax.request(
+        p.then(
+            function () {
+                applyAjax.request(
                     form.attr('action'),
                     formData,
                     true,
@@ -136,10 +132,11 @@
                     callback,
                     callbackError,
                     false
-                ).always(after))
-            });
+                );
+            }
+        );
 
-        return d.promise();
+        return false;
     };
 
     /**
