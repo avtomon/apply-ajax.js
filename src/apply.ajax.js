@@ -70,15 +70,16 @@
             },
             async: async ? true : false,
             success: function (data) {
-                if (isJson(data)) {
-                    data = JSON.parse(data);
-                    if (data.error !== undefined) {
-                        error(data.error);
-                    } else if (data.redirect) {
-                        window.location = data.redirect;
-                    } else {
-                        callback ? callback(data) : alert('Запрос успешно выполнен');
-                    }
+                if (!isJson(data)) {
+                    callback ? callback(data) : alert('Запрос успешно выполнен');
+                    return;
+                }
+
+                data = JSON.parse(data);
+                if (data.error !== undefined) {
+                    error(data.error);
+                } else if (data.redirect) {
+                    window.location = data.redirect;
                 } else {
                     callback ? callback(data) : alert('Запрос успешно выполнен');
                 }
