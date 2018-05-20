@@ -13,6 +13,7 @@
      * @param {string} HOST - хост на который будут отправляться запросы
      * @param {string} HIDE_CLASS - класс-метка для вставки массива записей
      * @param {string} ALLOWED_ATTRS - какие атрибуты разрешено вставлять в HTML-элементы
+     * @param {string} DEFAULT_ERROR_CALLBACK - обработчик ошибки по умолчанию
      */
     applyAjax.init = function (settings = {})
     {
@@ -51,6 +52,7 @@
      * @param {string} type - тип запроса (обычно GET или POST)
      * @param {function} callback - функция, отрабатывающая при успешном запросе
      * @param {function} callbackError - функция, отрабатывающая при ошибочном результате запроса
+     * @param {bool} processData - преобразовывать ли параметры запроса в строку
      */
     applyAjax.request = function(url, params, async, type, callback, callbackError, processData = true)
     {
@@ -62,7 +64,7 @@
 
         $.ajax(HOST + url + '?XDEBUG_SESSION_START=PHPSTORM', {
             type: type || 'GET',
-            contentType: false,
+            contentType: processData ? 'application/x-www-form-urlencoded' : false,
             processData: processData,
             data: params,
             xhrFields: {
@@ -98,6 +100,7 @@
      * @param {function} callback - коллбэк успешной отправки формы
      * @param {function} callbackError - коллбэк неудачной отправки формы
      * @param {function} after - эта функция выполняется полсе отправки формы (успешной либо нет)
+     *
      * @returns {*}
      */
     applyAjax.ajaxSubmit = function (form, before, callback, callbackError, after)
@@ -145,6 +148,7 @@
      *
      * @param {string} label
      * @param {array} matches
+     *
      * @returns {boolean}
      */
     function isInsertable(label, matches) {
@@ -160,7 +164,7 @@
     /**
      * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key
      *
-     * @param {jQuery} - Объект, в который вставляем
+     * @param {jQuery} object - объект, в который вставляем
      * @param {string} key - ключ для маркеров вставки
      * @param {string} value - значение для вставки
      *
@@ -207,7 +211,7 @@
      * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,
      * а исходный скрыть, иначе просто вставить данные в шаблон
      *
-     * @param {jQuery} - Объект, в который вставляем
+     * @param {jQuery} object - объект, в который вставляем
      * @param {object} data - данные для вставки
      *
      * @returns {jQuery|boolean}
@@ -241,6 +245,7 @@
     /**
      * Вставить набор данных в шаблон, предполагается что на вход дается только один кортеж данных
      *
+     * @param {jQuery} object - объект, в который вставляем
      * @param {object} data - данные для вставки
      *
      * @returns {jQuery|boolean}
