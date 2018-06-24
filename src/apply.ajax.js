@@ -5,7 +5,11 @@
         HIDE_CLASS = 'clone',
         HOST = location.origin,
         ALLOWED_ATTRS = ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
-        DEFAULT_ERROR_CALLBACK = alert;
+        DEFAULT_ERROR_CALLBACK = alert,
+        REQUEST_SETTINGS = {
+            processData: true
+        },
+        DEFAULT_PARAMS = {};
 
     /**
      * Конструктор
@@ -14,6 +18,8 @@
      * @param {string} HIDE_CLASS - класс-метка для вставки массива записей
      * @param {string} ALLOWED_ATTRS - какие атрибуты разрешено вставлять в HTML-элементы
      * @param {string} DEFAULT_ERROR_CALLBACK - обработчик ошибки по умолчанию
+     * @param {object} REQUEST_SETTINGS - настройки Ajax по умолчанию
+     * @param {object} DEFAULT_PARAMS - параметры запроса по умолчанию
      */
     applyAjax.init = function (settings = {})
     {
@@ -21,6 +27,8 @@
         HIDE_CLASS = settings.HIDE_CLASS || HIDE_CLASS;
         ALLOWED_ATTRS = settings.ALLOWED_ATTRS || ALLOWED_ATTRS;
         DEFAULT_ERROR_CALLBACK = settings.DEFAULT_ERROR_CALLBACK || DEFAULT_ERROR_CALLBACK;
+        REQUEST_SETTINGS = settings.REQUEST_SETTINGS || REQUEST_SETTINGS;
+        DEFAULT_PARAMS = settings.DEFAULT_PARAMS || DEFAULT_PARAMS;
     }
 
     /**
@@ -54,7 +62,7 @@
      * @param {function} callbackError - функция, отрабатывающая при ошибочном результате запроса
      * @param {bool} processData - преобразовывать ли параметры запроса в строку
      */
-    applyAjax.request = function(url, params, async, type, callback, callbackError, processData = true)
+    applyAjax.request = function(url, params, async, type, callback, callbackError, requestSettings = REQUEST_SETTINGS)
     {
         if (!url) {
             return false;
@@ -62,13 +70,15 @@
 
         let error = callbackError ? callbackError : DEFAULT_ERROR_CALLBACK;
 
-        $.ajax(HOST + url + '?XDEBUG_SESSION_START=PHPSTORM', {
+        $.ajax(HOST + url + '?XDEBUG_SESSION_START=PHPSTORM', $.extend({}, {
             type: type || 'GET',
-            contentType: processData ? 'application/x-www-form-urlencoded' : false,
-            processData: processData,
-            data: params,
+            contentType: requestSettings.processData ? 'application/x-www-form-urlencoded' : false,
+            data: params instanceof FormData ? params : $.extend({}, DEFAULT_PARAMS, params),
             xhrFields: {
                 withCredentials: true
+            },
+            headers: {
+                hash: location.hash.replace('#', '')
             },
             async: async ? true : false,
             success: function (data) {
@@ -89,7 +99,7 @@
             error: function (XMLHttpRequest, textStatus) {
                 error('Произошла ошибка: ' + textStatus);
             }
-        });
+        }, requestSettings));
     }
 
     /**
@@ -135,7 +145,9 @@
                     form.attr('method'),
                     callback,
                     callbackError,
-                    false
+                    {
+                        processData: false
+                    }
                 );
             }
         );
