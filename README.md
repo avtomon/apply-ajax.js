@@ -1,145 +1,119 @@
-applyAjax.js
-============
+<a name="ApplyAjax"></a>
 
-applyAjax - это библиотека включающая в себя js-шаблонизатор и обертку над $.ajax, упрощающую Ajax запросы к серверу.
+## ApplyAjax
+**Kind**: global class  
 
-##Шаблонизатор
+* [ApplyAjax](#ApplyAjax)
+    * [new ApplyAjax(settings)](#new_ApplyAjax_new)
+    * _instance_
+        * [._DEFAULT_PARAMS](#ApplyAjax+_DEFAULT_PARAMS) : <code>Params</code>
+        * [.data](#ApplyAjax+data) : <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code>
+        * [.request(url, rawParams, method, callback, callbackError, headers)](#ApplyAjax+request) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
+        * [.ajaxSubmit(form, before, callback, callbackError, after)](#ApplyAjax+ajaxSubmit) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
+        * [.modifyElement(object, key, value)](#ApplyAjax+modifyElement) ⇒ <code>HTMLElement</code>
+        * [.setMultiData(object, data)](#ApplyAjax+setMultiData) ⇒ <code>HTMLElement</code> \| <code>NodeList</code>
+        * [.setData(object, data)](#ApplyAjax+setData) ⇒ <code>HTMLElement</code>
+    * _static_
+        * [.isJson(str)](#ApplyAjax.isJson) ⇒ <code>boolean</code>
 
-Предположим вы желаете всунуть на сайт каталог товаров. В простейшем случае вам понадобится страница списка товаров и страница, собственно товара.
+<a name="new_ApplyAjax_new"></a>
 
-И так, вам надо сверстать 2 этих страницы, а затем расставить маркеры для шаблонизатора дабы он знал в какие места страницы нужно вставлять данные. 
+### new ApplyAjax(settings)
+Конструктор
 
-Сейчас я как смогу поведаю суть работы шаблонизатора на примере этих страниц. Работа по поиску мест для вставки сводится к поиску определенных классов элемента в верстке, например элемент с классом *in_text_content* говорит о том что внутрь этого элемента нужно вставить содержимое поля данных content:
 
-    <div class="in_text_content"></div>
-    
-    Код 1.
-    
-Разумеется, не так все просто. Давайте поподробнее разберем весь механизм. В виде данных шаблонизатору приходит массив данных, чаще всего выборка из базы данных, и формат у него соответствующий, то есть набор записей с однородным набором полей, например данные двух пользователя:
+| Param | Type | Description |
+| --- | --- | --- |
+| settings | <code>Templater.IApplyAjaxArgs</code> | настройки |
 
-    var users = [{id: 34,
-                  name: 'John',
-                  surname: 'Smith',
-                  birthdate: '01.04.1970'},
-                 {id: 35,
-                  name: 'Jane',
-                  surname: 'Doe',
-                  birthdate: '23.09.1983'}];
-              
-    Код 2.
-    
-Теперь допустим нам надо вставить данные о каждом пользователе в вот в такой блок верстки:
+<a name="ApplyAjax+_DEFAULT_PARAMS"></a>
 
-    <li class="in_id_id in_data-val_birthdate">
-        <span class="in_text_surname"></span>
-        <span class="in_text_name"></span>
-    </li>
-    
-    Код 3.
-    
-То есть должен получиться список пользователей. 
-Но в изначальном шаблоне будет что-то типа:
+### applyAjax._DEFAULT_PARAMS : <code>Params</code>
+Параметры запроса по умолчанию
 
-    <li class="clone in_id_id in_data-val_birthdate">
-        <span class="in_text_surname"></span>
-        <span class="in_text_name"></span>
-    </li>
-    
-    Код 4.
-    
-Отличие в наличие класса *clone*, строго говоря, называться он может и по-другому, но его назначение крайне важно. Класс должен нести с собой стиль CSS делающий элемент с этим классом невидимым.
+**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
+<a name="ApplyAjax+data"></a>
 
-Назначение же его в том, чтобы отделять элементы для множественной ставки от элементов для единичной вставки. Разница между этими двумя типами в способе обработки данных с несколькими однородными записями: при единичной вставки шаблонизатору все равно сколько записей пришло а вход, он всегда оставляет только одну – первую, то есть если воспользовался предыдущим примером с юзерами, то при единичной вставке вставится только одна первая запись о пользователе John Smith, а вторая будет отброшена. При этом должен использоваться [Код 3] (без указать класса *clone*), то есть блок [Код 3] просто заполнится данными.
+### applyAjax.data : <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code>
+Результат выполнения запроса
 
-Если же используется множественная вставка то будут вставлены все записи и вот как это произойдет:
+**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
+<a name="ApplyAjax+request"></a>
 
-1.  Шаблонизатор скопирует эталонный блок верстки код 4 (с классом *clone*) и вставит после.
+### applyAjax.request(url, rawParams, method, callback, callbackError, headers) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
+Обертка Ajax-запроса к серверу
 
-2.	Вставит первый кортеж данных в эту самую копию.
+**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
-3.	Пункты 1 и 2 будут повторяться пока записи данных не закончатся.
+| Param | Type | Description |
+| --- | --- | --- |
+| url | <code>string</code> | адрес обработки |
+| rawParams | <code>RawParams</code> | параметры запроса к серверу |
+| method | <code>&quot;GET&quot;</code> \| <code>&quot;POST&quot;</code> | тип запроса (обычно GET или POST) |
+| callback | <code>OkCallback</code> | функция, отрабатывающая при успешном запросе |
+| callbackError | <code>ErrorCallback</code> | функция, отрабатывающая при ошибочном результате запроса |
+| headers | <code>object</code> | заголовки запроса |
 
-Можно явно задать какой способ использовать: функция *setMultiData* работает по методу множественной вставки, а функция *setData* по методу единичной вставки, но я рекомендую использовать функцию *insertData*, ибо она избавляет от этого выбора - в этом случае выбор между двумя методами определяется наличием класса *HIDE\_CLASS* (он же *clone* из предыдущего примера, *HIDE_CLASS* имя константы определяющей имя этого ключевого класса), напомню что для верной работы этому классу должна соответствовать полная невидимость элемента его использующего.
+<a name="ApplyAjax+ajaxSubmit"></a>
 
-<br>
-##Описание методов
+### applyAjax.ajaxSubmit(form, before, callback, callbackError, after) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
+Ajax-отправка формы
 
-####isJSON
+**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
-    function isJSON (str)
-    
-**Описание:**
+| Param | Type | Description |
+| --- | --- | --- |
+| form | <code>HTMLFormElement</code> | форма, которую отправляем |
+| before |  | функция, выполняемая перед отправкой |
+| callback | <code>OkCallback</code> | коллбэк успешной отправки формы |
+| callbackError | <code>ErrorCallback</code> | коллбэк неудачной отправки формы |
+| after | <code>OkCallback</code> | эта функция выполняется после успешной отправки формы |
 
-Проверка и парсинг JSON-строки.
+<a name="ApplyAjax+modifyElement"></a>
 
-**Параметры:**
+### applyAjax.modifyElement(object, key, value) ⇒ <code>HTMLElement</code>
+Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
 
--   *str* – json-строка.
+**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
-<br>
-####request
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>HTMLElement</code> | объект, в который вставляем |
+| key | <code>string</code> | ключ для маркеров вставки |
+| value | <code>string</code> | значение для вставки |
 
-    function request (params, async, type, callback, callbackError)
-    
-**Описание:**
+<a name="ApplyAjax+setMultiData"></a>
 
-Функция выполняющая Ajax-запрос к серверу, её параметры.
+### applyAjax.setMultiData(object, data) ⇒ <code>HTMLElement</code> \| <code>NodeList</code>
+Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,а исходный скрыть, иначе просто вставить данные в шаблон
 
-**Параметры:**
+**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
--   *params* – параметры запроса к серверу;
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>HTMLElement</code> \| <code>NodeList</code> | объект, в который вставляем |
+| data | <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code> | данные для вставки |
 
--   *async* – асинхронно ли выполнять запрос;
+<a name="ApplyAjax+setData"></a>
 
--   *type* – тип запроса, обычно GET или POST;
+### applyAjax.setData(object, data) ⇒ <code>HTMLElement</code>
+Вставить набор данных в шаблон, предполагается что на вход дается только один кортеж данных
 
--   *callback* – колбэк на успешное выполнение запроса;
+**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
--   *callbackError* – колбэк на ошибочное выполнение.
+| Param | Type | Description |
+| --- | --- | --- |
+| object | <code>HTMLElement</code> | объект, в который вставляем |
+| data | <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code> | данные для вставки |
 
-На вход колбэку на успещное выполнение приходит результат запроса. Его можно вставляться в верстку при помощи функций шаблонизатора.
+<a name="ApplyAjax.isJson"></a>
 
-<br>
-####setMultiData
+### ApplyAjax.isJson(str) ⇒ <code>boolean</code>
+Является ли входное значение JSON-структурой
 
-    function setMultiData (data, parent)
-    
-**Описание:**
+**Kind**: static method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
-Запилить данные в шаблон. При этом исходные элементы для вставки остаются неизменными и становятся невидимыми, в том время как данные ставляются в их видимые копии, которые создаются перед вставкой.
+| Param | Type | Description |
+| --- | --- | --- |
+| str | <code>string</code> | проверяемое значение |
 
-**Параметры:**
-
--   *data* – данные для вставки;
-
--   *parent* - jQuery-селектор блоков для вставки
-
-<br>
-####setData
-
-    function setData (data, parent)
-    
-**Описание:**
-
-Запилить данные в шаблон. В отличие от предыдущей функции, здесь данные вставляются прямо в выбранные селектором элементы.
-
-**Параметры:**
-
--   *data* – данные для вставки;
-
--   *parent* - jQuery-селектор блоков для вставки
-
-<br>
-####insertData
-
-    function insertData(data, parent)
-    
-**Описание:**
-
-Использовать один из двух предудущих методов вставки изходя из присутствия в старших тегах блоков для вставки класса, отвечающего за сокрытие эталонных блоков (HIDE_CLASS).
-
-**Параметры:**
-
--   *data* – данные для вставки;
-
--   *parent* - jQuery-селектор блоков для вставки
