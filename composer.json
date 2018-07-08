@@ -1,8 +1,7 @@
 {
     "name": "avtomon/ApplyAjax.js",
     "description": "jQuery templater",
-    "type": "project",
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "config": {
 	      "process-timeout": 1800
     }
