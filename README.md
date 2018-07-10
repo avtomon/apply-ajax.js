@@ -1,8 +1,9 @@
-## ApplyAjax.js
+<a name="ApplyAjax"></a>
 
+## ApplyAjax
 Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
 
-**Тип**: global class  
+**Kind**: global class  
 
 * [ApplyAjax](#ApplyAjax)
     * [new ApplyAjax(settings)](#new_ApplyAjax_new)
@@ -86,8 +87,7 @@ Ajax-отправка формы
 <a name="ApplyAjax+setMultiData"></a>
 
 ### applyAjax.setMultiData(object, data) ⇒ <code>HTMLElement</code> \| <code>NodeList</code>
-Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,
-а исходный скрыть, иначе просто вставить данные в шаблон
+Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,а исходный скрыть, иначе просто вставить данные в шаблон
 
 **Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 

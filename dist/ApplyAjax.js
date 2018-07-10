@@ -9,6 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 var Templater;
 (function (Templater) {
+    /**
+     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
+     */
     class ApplyAjax {
         /**
          * Конструктор

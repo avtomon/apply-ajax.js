@@ -90,6 +90,9 @@ namespace Templater {
         _DEFAULT_PARAMS?: Params;
     }
 
+    /**
+     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
+     */
     export class ApplyAjax {
 
         static defaultSettings: IApplyAjaxArgs = {
