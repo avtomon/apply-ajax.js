@@ -91,7 +91,7 @@ namespace Templater {
     }
 
     /**
-     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
+     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
      */
     export class ApplyAjax {
 
