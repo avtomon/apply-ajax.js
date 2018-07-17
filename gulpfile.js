@@ -49,7 +49,7 @@ gulp.task('docs', function () {
     const jsdoc2md = require('jsdoc-to-markdown');
     const fs = require('fs');
 
-    const inputFile = '/dist/*.js';
+    const inputFile = 'dist/*.js';
 
     const templateData = jsdoc2md.getTemplateDataSync({ files: inputFile });
 
@@ -64,7 +64,7 @@ gulp.task('docs', function () {
             const template = `{{#class name="${className}"}}{{>docs_ru}}{{/class}}`;
 
             output = jsdoc2md.renderSync({ data: templateData, template: template });
-            let dest = `docs_ru/${className}.md`;
+            let dest = `${__dirname}/docs_ru/${className}.md`;
             console.log(dest);
             fs.writeFileSync(dest, output);
         }
