@@ -1,7 +1,7 @@
 <a name="ApplyAjax"></a>
 
 ## ApplyAjax
-Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
+Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
 
 **Kind**: global class  
 

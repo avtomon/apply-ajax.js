@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var Templater;
 (function (Templater) {
     /**
-     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
+     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
      */
     class ApplyAjax {
         /**
