@@ -1,121 +1,121 @@
-<a name="ApplyAjax"></a>
+<a name="ApplyAjax"> </a>
 
 ## ApplyAjax
-Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
+Abstraction of ajax-requests to the server + template of the received data.
 
-**Kind**: global class  
+**Kind**: global class
 
 * [ApplyAjax](#ApplyAjax)
-    * [new ApplyAjax(settings)](#new_ApplyAjax_new)
-    * _instance_
-        * [._DEFAULT_PARAMS](#ApplyAjax+_DEFAULT_PARAMS) : <code>Params</code>
-        * [.data](#ApplyAjax+data) : <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code>
-        * [.request(url, rawParams, method, callback, callbackError, headers)](#ApplyAjax+request) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
-        * [.ajaxSubmit(form, before, callback, callbackError, after)](#ApplyAjax+ajaxSubmit) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
-        * [.modifyElement(object, key, value)](#ApplyAjax+modifyElement) ⇒ <code>HTMLElement</code>
-        * [.setMultiData(object, data)](#ApplyAjax+setMultiData) ⇒ <code>HTMLElement</code> \| <code>NodeList</code>
-        * [.setData(object, data)](#ApplyAjax+setData) ⇒ <code>HTMLElement</code>
-    * _static_
-        * [.isJson(str)](#ApplyAjax.isJson) ⇒ <code>boolean</code>
+* [new ApplyAjax (settings)](#new_ApplyAjax_new)
+* _instance_
+* [._DEFAULT_PARAMS](#ApplyAjax + _DEFAULT_PARAMS): <code> Params </code>
+* [.data](#ApplyAjax + data): <code> Object </code>\| <code> Array. & lt; Object & gt; </code>\| <code> string </code>
+* [.request (url, rawParams, method, callback, callbackError, headers)](#ApplyAjax + request) ⇒ <code> Promise. & lt; (Response\| Error) & gt; </code>
+* [.ajaxSubmit (form, before, callback, callbackError, after)](#ApplyAjax + ajaxSubmit) ⇒ <code> Promise. & lt; (Response\| Error) & gt; </code>
+* [.modifyElement (object, key, value)](#ApplyAjax + modifyElement) ⇒ <code> HTMLElement </code>
+* [.setMultiData (object, data)](#ApplyAjax + setMultiData) ⇒ <code> HTMLElement </code>\| <code> NodeList </code>
+* [.setData (object, data)](#ApplyAjax + setData) ⇒ <code> HTMLElement </code>
+* _static_
+* [.isJson (str)](#ApplyAjax.isJson) ⇒ <code> boolean </code>
 
-<a name="new_ApplyAjax_new"></a>
+<a name="new_ApplyAjax_new"> </a>
 
-### new ApplyAjax(settings)
-Конструктор
+### new ApplyAjax (settings)
+Constructor
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| settings | <code>Templater.IApplyAjaxArgs</code> | настройки |
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | settings | <code> Templater.IApplyAjaxArgs </code> | settings |
 
-<a name="ApplyAjax+_DEFAULT_PARAMS"></a>
+<a name="ApplyAjax+_DEFAULT_PARAMS"> </a>
 
-### applyAjax._DEFAULT_PARAMS : <code>Params</code>
-Параметры запроса по умолчанию
+### applyAjax._DEFAULT_PARAMS: <code> Params </code>
+Default query parameters
 
-**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
-<a name="ApplyAjax+data"></a>
+**Kind**: instance property of [<code> ApplyAjax </code>](#ApplyAjax)
+<a name="ApplyAjax+data"> </a>
 
-### applyAjax.data : <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code>
-Результат выполнения запроса
+### applyAjax.data: <code> Object </code>\| <code> Array. & lt; Object & gt; </code>\| <code> string </code>
+Result of query execution
 
-**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
-<a name="ApplyAjax+request"></a>
+**Kind**: instance property of [<code> ApplyAjax </code>](#ApplyAjax)
+<a name="ApplyAjax+request"> </a>
 
-### applyAjax.request(url, rawParams, method, callback, callbackError, headers) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
-Обертка Ajax-запроса к серверу
+### applyAjax.request (url, rawParams, method, callback, callbackError, headers) ⇒ <code> Promise. & lt; (Response\| Error) & gt; </code>
+Ajax-request wrapper to the server
 
-**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
+**Kind**: instance method of [<code> ApplyAjax </code>](#ApplyAjax)
 
-| Param | Type | Description |
-| --- | --- | --- |
-| url | <code>string</code> | адрес обработки |
-| rawParams | <code>RawParams</code> | параметры запроса к серверу |
-| method | <code>&quot;GET&quot;</code> \| <code>&quot;POST&quot;</code> | тип запроса (обычно GET или POST) |
-| callback | <code>OkCallback</code> | функция, отрабатывающая при успешном запросе |
-| callbackError | <code>ErrorCallback</code> | функция, отрабатывающая при ошибочном результате запроса |
-| headers | <code>object</code> | заголовки запроса |
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | url | <code> string </code> | processing address |
+| | rawParams | <code> RawParams </code> | server request parameters |
+| | method | <code> & quot; GET & quot; </code>\| <code> & quot; POST & quot; </code> | type of request (usually GET or POST) |
+| | callback | <code> OkCallback </code> | function that works on successful request |
+| | callbackError | <code> ErrorCallback </code> | function that works with an error result of a query |
+| | headers | <code> object </code> | request headers |
 
-<a name="ApplyAjax+ajaxSubmit"></a>
+<a name="ApplyAjax+ajaxSubmit"> </a>
 
-### applyAjax.ajaxSubmit(form, before, callback, callbackError, after) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
-Ajax-отправка формы
+### applyAjax.ajaxSubmit (form, before, callback, callbackError, after) ⇒ <code> Promise. & lt; (Response\| Error) & gt; </code>
+Ajax-form submission
 
-**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
+**Kind**: instance method of [<code> ApplyAjax </code>](#ApplyAjax)
 
-| Param | Type | Description |
-| --- | --- | --- |
-| form | <code>HTMLFormElement</code> | форма, которую отправляем |
-| before |  | функция, выполняемая перед отправкой |
-| callback | <code>OkCallback</code> | коллбэк успешной отправки формы |
-| callbackError | <code>ErrorCallback</code> | коллбэк неудачной отправки формы |
-| after | <code>OkCallback</code> | эта функция выполняется после успешной отправки формы |
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | form | <code> HTMLFormElement </code> | form that we ship |
+| | before | | | function that is performed before sending |
+| | callback | <code> OkCallback </code> | callback successful form submission |
+| | callbackError | <code> ErrorCallback </code> | callback failed form submission |
+| | after | <code> OkCallback </code> | this function is executed after the form is successfully submitted |
 
-<a name="ApplyAjax+modifyElement"></a>
+<a name="ApplyAjax+modifyElement"> </a>
 
-### applyAjax.modifyElement(object, key, value) ⇒ <code>HTMLElement</code>
-Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
+### applyAjax.modifyElement (object, key, value) ⇒ <code> HTMLElement </code>
+Modifies the jQuery element by inserting the value string into the places marked with the key markers.
 
-**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
+**Kind**: instance method of [<code> ApplyAjax </code>](#ApplyAjax)
 
-| Param | Type | Description |
-| --- | --- | --- |
-| object | <code>HTMLElement</code> | объект, в который вставляем |
-| key | <code>string</code> | ключ для маркеров вставки |
-| value | <code>string</code> | значение для вставки |
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | object | <code> HTMLElement </code> | object, which we insert |
+| | key | <code> string </code> | key for insertion markers |
+| | value | <code> string </code> | value for insertion |
 
-<a name="ApplyAjax+setMultiData"></a>
+<a name="ApplyAjax+setMultiData"> </a>
 
-### applyAjax.setMultiData(object, data) ⇒ <code>HTMLElement</code> \| <code>NodeList</code>
-Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,а исходный скрыть, иначе просто вставить данные в шаблон
+### applyAjax.setMultiData (object, data) ⇒ <code> HTMLElement </code>\| <code> NodeList </code>
 
-**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| object | <code>HTMLElement</code> \| <code>NodeList</code> | объект, в который вставляем |
-| data | <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code> | данные для вставки |
+**Kind**: instance method of [<code> ApplyAjax </code>](#ApplyAjax)
 
-<a name="ApplyAjax+setData"></a>
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | object | <code> HTMLElement </code>\| <code> NodeList </code> | object, which we insert |
+| | data | <code> Object </code>\| <code> Array. & lt; Object & gt; </code>\| <code> string </code> | data for insertion |
 
-### applyAjax.setData(object, data) ⇒ <code>HTMLElement</code>
-Вставить набор данных в шаблон, предполагается что на вход дается только один кортеж данных
+<a name="ApplyAjax+setData"> </a>
 
-**Kind**: instance method of [<code>ApplyAjax</code>](#ApplyAjax)  
+### applyAjax.setData (object, data) ⇒ <code> HTMLElement </code>
+To insert a data set into a template, it is assumed that only one data tuple is given to the input
 
-| Param | Type | Description |
-| --- | --- | --- |
-| object | <code>HTMLElement</code> | объект, в который вставляем |
-| data | <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code> | данные для вставки |
+**Kind**: instance method of [<code> ApplyAjax </code>](#ApplyAjax)
 
-<a name="ApplyAjax.isJson"></a>
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | object | <code> HTMLElement </code> | object, which we insert |
+| | data | <code> Object </code>\| <code> Array. & lt; Object & gt; </code>\| <code> string </code> | data for insertion |
 
-### ApplyAjax.isJson(str) ⇒ <code>boolean</code>
-Является ли входное значение JSON-структурой
+<a name="ApplyAjax.isJson"> </a>
 
-**Kind**: static method of [<code>ApplyAjax</code>](#ApplyAjax)  
+### ApplyAjax.isJson (str) ⇒ <code> boolean </code>
+Is the input value a JSON structure
 
-| Param | Type | Description |
-| --- | --- | --- |
-| str | <code>string</code> | проверяемое значение |
+**Kind**: static method of [<code> ApplyAjax </code>](#ApplyAjax)
+
+| | Param | Type | Description |
+| | --- | --- | --- |
+| | str | <code> string </code> | checked value |
 

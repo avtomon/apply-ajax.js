@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+BASE_PATH=`pwd`
+
 gulp build
 
 ./translate.sh docs en "$BASE_PATH/"
