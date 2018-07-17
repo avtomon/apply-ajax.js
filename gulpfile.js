@@ -64,7 +64,7 @@ gulp.task('docs', function () {
             const template = `{{#class name="${className}"}}{{>docs_ru}}{{/class}}`;
 
             output = jsdoc2md.renderSync({ data: templateData, template: template });
-            let dest = `${__dirname}/docs_ru/${className}.md`;
+            let dest = `docs_ru/${className}.md`;
             console.log(dest);
             fs.writeFileSync(dest, output);
         }
