@@ -1,0 +1,19 @@
+{
+  "name": "applyajax",
+  "version": "1.0.0",
+  "description": "<a name=\"ApplyAjax\"></a>",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avtomon/applyAjax.js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/avtomon/applyAjax.js/issues"
+  },
+  "homepage": "https://github.com/avtomon/applyAjax.js#readme"
+}
