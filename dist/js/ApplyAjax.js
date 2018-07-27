@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var Templater;
+export var Templater;
 (function (Templater) {
     /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
@@ -19,6 +19,30 @@ var Templater;
          * @param {Templater.IApplyAjaxArgs} settings - настройки
          */
         constructor(settings = {}) {
+            /**
+             * Класс для обозначения клонируемых элементов
+             *
+             * @type {string}
+             */
+            this._HIDE_CLASS = '';
+            /**
+             * В какие атрибуты можно вставлять данные
+             *
+             * @type {string[]}
+             */
+            this._ALLOWED_ATTRS = [];
+            /**
+             * Хэндлер обработки ошибки
+             *
+             * @type ErrorCallback
+             */
+            this._DEFAULT_ERROR_CALLBACK = null;
+            /**
+             * Настройки запроса
+             *
+             * @type Headers
+             */
+            this._DEFAULT_HEADERS = null;
             /**
              * Параметры запроса по умолчанию
              *
@@ -33,7 +57,7 @@ var Templater;
             this.data = {};
             Object.keys(ApplyAjax.defaultSettings).forEach(function (option) {
                 this[option] = settings[option] || ApplyAjax.defaultSettings[option];
-            });
+            }, this);
         }
         /**
          * Является ли входное значение JSON-структурой
@@ -70,7 +94,7 @@ var Templater;
                 if (!url) {
                     return new Error('URL запроса не задан');
                 }
-                let self = this, urlObject = new URL(this._HOST + url), params = rawParams instanceof FormData ? rawParams : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                let self = this, urlObject = new URL(url), params = rawParams instanceof FormData ? rawParams : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
                 if (method === 'GET') {
                     Object.keys(params).forEach(key => urlObject.searchParams.append(key, params[key]));
                     params = null;
@@ -81,6 +105,8 @@ var Templater;
                     credentials: 'include',
                     headers: new Headers({
                         hash: location.hash.replace('#', ''),
+                        'X-REQUESTED-WITH': 'xmlhttprequest'
+                        //'Content-Type': headers.processData ? 'application/x-www-form-urlencoded' : false,
                     })
                 }, headers);
                 return fetch(urlObject.toString(), options).then(function (response) {
@@ -107,7 +133,7 @@ var Templater;
          * Ajax-отправка формы
          *
          * @param {HTMLFormElement} form - форма, которую отправляем
-         * @param {} before - функция, выполняемая перед отправкой
+         * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
          * @param {OkCallback} after - эта функция выполняется после успешной отправки формы
@@ -116,22 +142,25 @@ var Templater;
          */
         ajaxSubmit(form, before, callback, callbackError, after) {
             let self = this;
-            return new Promise(function (resolve) {
+            return new Promise(function (resolve, reject) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    let formData = new FormData(form);
-                    if (!before) {
-                        resolve();
-                        return formData;
+                    let formData = new FormData(form), result = before ? yield before(formData) : true;
+                    if (result) {
+                        resolve(formData);
+                        return;
                     }
-                    return before(formData);
+                    reject(null);
                 });
             }).then(function (formData) {
                 let response = self.request(form.action, formData, 'POST', callback, callbackError);
                 response.then(after);
                 return response;
             }, function (e) {
-                callbackError(e.message);
-                return e;
+                if (e) {
+                    callbackError(e.message);
+                    return e;
+                }
+                return null;
             });
         }
         ;
@@ -231,7 +260,7 @@ var Templater;
                 }
                 else {
                     this.modifyElement(object, prop, data[prop]);
-                    object.querySelectorAll('[class*=_' + prop + ']').forEach(function (item) {
+                    object.querySelectorAll("[class*='_${prop}']").forEach(function (item) {
                         this.modifyElement(item, prop, data[prop]);
                     });
                 }
@@ -242,7 +271,6 @@ var Templater;
     }
     ApplyAjax.defaultSettings = {
         _HIDE_CLASS: 'clone',
-        _HOST: location.origin,
         _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
         _DEFAULT_ERROR_CALLBACK: alert,
         _DEFAULT_HEADERS: {

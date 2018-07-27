@@ -8,6 +8,10 @@
 * [ApplyAjax](#ApplyAjax)
     * [new ApplyAjax(settings)](#new_ApplyAjax_new)
     * _instance_
+        * [._HIDE_CLASS](#ApplyAjax+_HIDE_CLASS) : <code>string</code>
+        * [._ALLOWED_ATTRS](#ApplyAjax+_ALLOWED_ATTRS) : <code>Array.&lt;string&gt;</code>
+        * [._DEFAULT_ERROR_CALLBACK](#ApplyAjax+_DEFAULT_ERROR_CALLBACK) : <code>ErrorCallback</code>
+        * [._DEFAULT_HEADERS](#ApplyAjax+_DEFAULT_HEADERS) : <code>Headers</code>
         * [._DEFAULT_PARAMS](#ApplyAjax+_DEFAULT_PARAMS) : <code>Params</code>
         * [.data](#ApplyAjax+data) : <code>Object</code> \| <code>Array.&lt;Object&gt;</code> \| <code>string</code>
         * [.request(url, rawParams, method, callback, callbackError, headers)](#ApplyAjax+request) ⇒ <code>Promise.&lt;(Response\|Error)&gt;</code>
@@ -28,6 +32,30 @@
 | --- | --- | --- |
 | settings | <code>Templater.IApplyAjaxArgs</code> | настройки |
 
+<a name="ApplyAjax+_HIDE_CLASS"></a>
+
+### applyAjax._HIDE_CLASS : <code>string</code>
+Класс для обозначения клонируемых элементов
+
+**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
+<a name="ApplyAjax+_ALLOWED_ATTRS"></a>
+
+### applyAjax._ALLOWED_ATTRS : <code>Array.&lt;string&gt;</code>
+В какие атрибуты можно вставлять данные
+
+**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
+<a name="ApplyAjax+_DEFAULT_ERROR_CALLBACK"></a>
+
+### applyAjax._DEFAULT_ERROR_CALLBACK : <code>ErrorCallback</code>
+Хэндлер обработки ошибки
+
+**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
+<a name="ApplyAjax+_DEFAULT_HEADERS"></a>
+
+### applyAjax._DEFAULT_HEADERS : <code>Headers</code>
+Настройки запроса
+
+**Kind**: instance property of [<code>ApplyAjax</code>](#ApplyAjax)  
 <a name="ApplyAjax+_DEFAULT_PARAMS"></a>
 
 ### applyAjax._DEFAULT_PARAMS : <code>Params</code>
@@ -66,7 +94,7 @@ Ajax-отправка формы
 | Param | Type | Description |
 | --- | --- | --- |
 | form | <code>HTMLFormElement</code> | форма, которую отправляем |
-| before |  | функция, выполняемая перед отправкой |
+| before | <code>BeforeCallback</code> | функция, выполняемая перед отправкой |
 | callback | <code>OkCallback</code> | коллбэк успешной отправки формы |
 | callbackError | <code>ErrorCallback</code> | коллбэк неудачной отправки формы |
 | after | <code>OkCallback</code> | эта функция выполняется после успешной отправки формы |

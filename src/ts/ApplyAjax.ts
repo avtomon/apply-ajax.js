@@ -1,6 +1,6 @@
 'use strict';
 
-namespace Templater {
+export namespace Templater {
 
     /**
      * Параметры запроса
@@ -35,7 +35,7 @@ namespace Templater {
     /**
      * Сигнатура функции выполняющейся перед отправкой запроса
      */
-    type BeforeCallback = (formData: FormData) => Promise<FormData | Error>
+    type BeforeCallback = (formData: FormData) => Promise<boolean>
 
     /**
      * Элементы формы
@@ -53,13 +53,6 @@ namespace Templater {
          * @type {string}
          */
         _HIDE_CLASS?: string;
-
-        /**
-         * Хост для запросов по умолчаию
-         *
-         * @type {string}
-         */
-        _HOST?: string;
 
         /**
          * В какие атрибуты можно вставлять данные
@@ -97,7 +90,6 @@ namespace Templater {
 
         static defaultSettings: IApplyAjaxArgs = {
             _HIDE_CLASS: 'clone',
-            _HOST: location.origin,
             _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
             _DEFAULT_ERROR_CALLBACK: alert,
             _DEFAULT_HEADERS: {
@@ -113,35 +105,28 @@ namespace Templater {
          *
          * @type {string}
          */
-        protected _HIDE_CLASS: string;
-
-        /**
-         * Хост для запросов по умолчаию
-         *
-         * @type {string}
-         */
-        protected _HOST: string;
+        protected _HIDE_CLASS: string = '';
 
         /**
          * В какие атрибуты можно вставлять данные
          *
          * @type {string[]}
          */
-        protected _ALLOWED_ATTRS: string[];
+        protected _ALLOWED_ATTRS: string[] = [];
 
         /**
          * Хэндлер обработки ошибки
          *
          * @type ErrorCallback
          */
-        protected _DEFAULT_ERROR_CALLBACK: ErrorCallback;
+        protected _DEFAULT_ERROR_CALLBACK: ErrorCallback = null;
 
         /**
          * Настройки запроса
          *
          * @type Headers
          */
-        protected _DEFAULT_HEADERS: Headers;
+        protected _DEFAULT_HEADERS: Headers = null;
 
         /**
          * Параметры запроса по умолчанию
@@ -162,11 +147,11 @@ namespace Templater {
          *
          * @param {Templater.IApplyAjaxArgs} settings - настройки
          */
-        constructor(settings: IApplyAjaxArgs = {}) {
+        public constructor(settings: IApplyAjaxArgs = {}) {
 
             Object.keys(ApplyAjax.defaultSettings).forEach(function (option) {
                 this[option] = settings[option] || ApplyAjax.defaultSettings[option];
-            });
+            }, this);
         }
 
 
@@ -177,7 +162,7 @@ namespace Templater {
          *
          * @returns {boolean}
          */
-        static isJson(str: string): boolean {
+        public static isJson(str: string): boolean {
             try {
                 let json = JSON.parse(str);
                 if (json instanceof Object) {
@@ -202,7 +187,7 @@ namespace Templater {
          *
          * @returns {Promise<Response | Error>}
          */
-        async request(
+        public async request(
             url: USVString,
             rawParams: RawParams,
             method: RequestMethod,
@@ -216,7 +201,7 @@ namespace Templater {
             }
 
             let self = this,
-                urlObject = new URL(this._HOST + url),
+                urlObject = new URL(url),
                 params: URLSearchParams | FormData | null = rawParams instanceof FormData ? rawParams : new URLSearchParams({...this._DEFAULT_PARAMS, ...rawParams} as Record<string, string>);
 
             if (method === 'GET') {
@@ -233,6 +218,7 @@ namespace Templater {
                         credentials: 'include',
                         headers: new Headers({
                             hash: location.hash.replace('#', ''),
+                            'X-REQUESTED-WITH': 'xmlhttprequest'
                             //'Content-Type': headers.processData ? 'application/x-www-form-urlencoded' : false,
                         })
                     },
@@ -268,14 +254,14 @@ namespace Templater {
          * Ajax-отправка формы
          *
          * @param {HTMLFormElement} form - форма, которую отправляем
-         * @param {} before - функция, выполняемая перед отправкой
+         * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
          * @param {OkCallback} after - эта функция выполняется после успешной отправки формы
          *
          * @returns {Promise<Response | Error>}
          */
-        ajaxSubmit(
+        public ajaxSubmit(
             form: HTMLFormElement,
             before?: BeforeCallback,
             callback?: OkCallback,
@@ -285,17 +271,18 @@ namespace Templater {
 
             let self = this;
 
-            return new Promise<FormData>(async function (resolve): Promise<FormData | Error> {
-                let formData = new FormData(form);
+            return new Promise<FormData>(async function (resolve, reject): Promise<FormData | Error | null> {
+                let formData: FormData = new FormData(form),
+                    result: boolean = before ? await before(formData) : true;
 
-                if (!before) {
-                    resolve();
-                    return formData;
+                if (result) {
+                    resolve(formData);
+                    return;
                 }
 
-                return before(formData);
+                reject(null);
             }).then(
-                function (formData: FormData): Promise<Response | Error> {
+                function (formData: FormData): Promise<Response | Error | null> {
                     let response = self.request(
                         form.action,
                         formData,
@@ -308,10 +295,14 @@ namespace Templater {
 
                     return response;
                 },
-                function (e: Error) {
-                    callbackError(e.message);
+                function (e?: Error) {
+                    if (e) {
+                        callbackError(e.message);
 
-                    return e;
+                        return e;
+                    }
+
+                    return null;
                 }
             );
         };
@@ -365,7 +356,7 @@ namespace Templater {
          *
          * @returns {HTMLElement | NodeList}
          */
-        setMultiData(object: HTMLElement | NodeList, data: Object | Object[] | string = this.data): HTMLElement | NodeList {
+        public setMultiData(object: HTMLElement | NodeList, data: Object | Object[] | string = this.data): HTMLElement | NodeList {
 
             if (typeof data !== 'object' || !Object.keys(data).length) {
                 return object;
@@ -410,7 +401,7 @@ namespace Templater {
          *
          * @returns {HTMLElement}
          */
-        setData(object: HTMLElement, data: Object | Object[] | string = this.data): HTMLElement {
+        public setData(object: HTMLElement, data: Object | Object[] | string = this.data): HTMLElement {
 
             if (typeof data !== 'object' || !Object.keys(data).length) {
                 return object;

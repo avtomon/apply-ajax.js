@@ -19,7 +19,7 @@ const AUTOPREFIXER_BROWSERS = [
 ];
 
 gulp.task('js', function () {
-    return gulp.src(['dist/*.js', '!dist/*.min.js'])
+    return gulp.src(['dist/js/*.js', '!dist/js/*.min.js'])
         .pipe(filesize())
         .pipe(uglify())
         .pipe(rename({suffix: '.min'}))
@@ -32,7 +32,7 @@ gulp.task('js', function () {
 });
 
 gulp.task('css', function () {
-    return gulp.src(['dist/*.css', '!dist/*.min.css'])
+    return gulp.src(['dist/css/*.css', '!dist/css/*.min.css'])
         .pipe(filesize())
         .pipe(autoprefixer({browsers: AUTOPREFIXER_BROWSERS}))
         .pipe(cleanCSS())
@@ -49,7 +49,7 @@ gulp.task('docs', function () {
     const jsdoc2md = require('jsdoc-to-markdown');
     const fs = require('fs');
 
-    const inputFile = 'dist/*.js';
+    const inputFile = 'dist/js/*.js';
 
     const templateData = jsdoc2md.getTemplateDataSync({ files: inputFile });
 
