@@ -1,6 +1,6 @@
 {
     "name": "avtomon/ApplyAjax.js",
-    "description": "JavaScript templater",
+    "description": "JavaScript templater & Ajax wrapper",
     "minimum-stability": "dev",
     "config": {
 	      "process-timeout": 1800
