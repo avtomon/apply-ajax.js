@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var Templater;
+export var Templater;
 (function (Templater) {
     /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
@@ -20,6 +20,24 @@ var Templater;
          */
         constructor(settings = {}) {
             /**
+             * Хост по умолчанию
+             *
+             * @type {string}
+             */
+            this._HOST = '';
+            /**
+             * Класс для обозначения клонируемых элементов
+             *
+             * @type {string}
+             */
+            this._HIDE_CLASS = '';
+            /**
+             * В какие атрибуты можно вставлять данные
+             *
+             * @type {string[]}
+             */
+            this._ALLOWED_ATTRS = [];
+            /**
              * Параметры запроса по умолчанию
              *
              * @type Params
@@ -31,9 +49,9 @@ var Templater;
              * @type Object | Object[] | string
              */
             this.data = {};
-            Object.keys(ApplyAjax.defaultSettings).forEach(function (option) {
-                this[option] = settings[option] || ApplyAjax.defaultSettings[option];
-            });
+            Object.keys(ApplyAjax._defaultSettings).forEach(function (option) {
+                this[option] = settings[option] || ApplyAjax._defaultSettings[option];
+            }, this);
         }
         /**
          * Является ли входное значение JSON-структурой
@@ -54,6 +72,59 @@ var Templater;
             return false;
         }
         /**
+         * Запрос файлов с прослойкой из кэша
+         *
+         * @param {string} url
+         * @param {FileOkCallback} fileCallback
+         * @param {FileTypeHandler} type
+         * @returns {Promise<Templater.FileType>}
+         */
+        requestFile(url, fileCallback, type = 'text') {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (!ApplyAjax._fileCache[url]) {
+                    ApplyAjax._fileCache[url] = yield fetch(url).then(function (response) {
+                        return response[type]();
+                    });
+                }
+                fileCallback(ApplyAjax._fileCache[url]);
+                return ApplyAjax._fileCache[url];
+            });
+        }
+        /**
+         * Хэндлер успешной отправки Ajax-запроса
+         *
+         * @param {Response} response - объект ответа сервера
+         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
+         * @param {ErrorCallback} error - обработчик ошибки, переданный вызывающим кодом
+         *
+         * @returns {Promise<any>}
+         */
+        requestOkHandler(response, callback, callbackError) {
+            return response.json().then(function (data) {
+                this.data = data;
+                if (data.error !== undefined) {
+                    callbackError(data.error);
+                }
+                else if (data.redirect) {
+                    window.location = data.redirect;
+                }
+                else {
+                    callback ? callback(data) : alert('Запрос успешно выполнен');
+                }
+                return data;
+            }.bind(this));
+        }
+        /**
+         * Хэндлер ошибки отправки Ajax-запроса
+         *
+         * @param {Error} e - объект ошибки
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
+         */
+        requestErrorHandler(e, callbackError) {
+            callbackError(`Произошла ошибка: ${e.message}`);
+            throw e;
+        }
+        /**
          * Обертка Ajax-запроса к серверу
          *
          * @param {string} url - адрес обработки
@@ -61,77 +132,126 @@ var Templater;
          * @param {"GET" | "POST"} method - тип запроса (обычно GET или POST)
          * @param {OkCallback} callback - функция, отрабатывающая при успешном запросе
          * @param {ErrorCallback} callbackError - функция, отрабатывающая при ошибочном результате запроса
-         * @param {object} headers - заголовки запроса
+         * @param {object} Headers - заголовки запроса
          *
-         * @returns {Promise<Response | Error>}
+         * @returns {Promise<Response | void>}
          */
         request(url, rawParams, method, callback, callbackError, headers) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (!url) {
-                    return new Error('URL запроса не задан');
+                    throw new Error('URL запроса не задан');
                 }
-                let self = this, urlObject = new URL(this._HOST + url), params = rawParams instanceof FormData ? rawParams : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                let urlObject = new URL(this._HOST + url), params = rawParams instanceof FormData ? rawParams : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
                 if (method === 'GET') {
                     Object.keys(params).forEach(key => urlObject.searchParams.append(key, params[key]));
-                    params = null;
+                    params = '';
                 }
-                let error = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK, options = Object.assign({}, this._DEFAULT_HEADERS, {
+                callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
+                let options = {
                     method: method,
                     body: params,
                     credentials: 'include',
-                    headers: new Headers({
-                        hash: location.hash.replace('#', ''),
-                    })
-                }, headers);
-                return fetch(urlObject.toString(), options).then(function (response) {
-                    response.json().then(function (data) {
-                        self.data = data;
-                        if (data.error !== undefined) {
-                            error(data.error);
-                        }
-                        else if (data.redirect) {
-                            window.location = data.redirect;
-                        }
-                        else {
-                            callback ? callback(data) : alert('Запрос успешно выполнен');
-                        }
-                    });
+                    headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
+                        hash: location.hash.replace('#', '')
+                    }, headers))
+                };
+                return fetch(urlObject.toString(), options)
+                    .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error(response.statusText);
+                    }
                     return response;
-                }, function (e) {
-                    error(`Произошла ошибка: ${e.message}`);
-                    return e;
-                });
+                })
+                    .then(function (response) {
+                    this.requestOkHandler(response, callback, callbackError);
+                    return response;
+                }.bind(this), function (e) {
+                    this.requestErrorHandler(e, callbackError);
+                }.bind(this));
             });
         }
         /**
          * Ajax-отправка формы
          *
          * @param {HTMLFormElement} form - форма, которую отправляем
-         * @param {} before - функция, выполняемая перед отправкой
+         * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
-         * @param {OkCallback} after - эта функция выполняется после успешной отправки формы
          *
-         * @returns {Promise<Response | Error>}
+         * @returns {Promise<Response | void>}
          */
-        ajaxSubmit(form, before, callback, callbackError, after) {
+        ajaxSubmit(form, before, callback, callbackError) {
             let self = this;
-            return new Promise(function (resolve) {
+            let promise = new Promise(function (resolve, reject) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    let formData = new FormData(form);
-                    if (!before) {
-                        resolve();
-                        return formData;
+                    let formData = new FormData(form), result = before ? yield before(formData) : true;
+                    if (result) {
+                        resolve(formData);
+                        return;
                     }
-                    return before(formData);
+                    reject();
                 });
-            }).then(function (formData) {
-                let response = self.request(form.action, formData, 'POST', callback, callbackError);
-                response.then(after);
-                return response;
-            }, function (e) {
-                callbackError(e.message);
-                return e;
+            });
+            return promise.then(function (formData) {
+                return self.request(form.action, formData, 'POST', callback, callbackError);
+            });
+        }
+        ;
+        /**
+         * Превратить объект FormData в обычный объект
+         *
+         * @param {FormData} formData - объект FormData
+         *
+         * @returns {Params}
+         */
+        static formDataToObject(formData) {
+            let toObject = {};
+            Array.from(formData.entries()).forEach(function (value) {
+                toObject[value[0]] = value[1];
+            });
+            return toObject;
+        }
+        /**
+         * Отправка формы при помощи воркера
+         *
+         * @param {HTMLFormElement} form - объект формы
+         * @param {BeforeCallback} before - функция, выполняемая перед отправкой
+         * @param {OkCallback} callback - коллбэк успешной отправки формы
+         * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         *
+         * @returns {Promise<Worker | void>}
+         */
+        workerSubmit(form, before, callback, callbackError) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (window['Worker']) {
+                    const worker = new Worker("/vendor/avtomon/ApplyAjax.js/dist/js/workerSubmit.js");
+                    let formData = new FormData(form), result = before ? yield before(formData) : true;
+                    callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
+                    if (!result) {
+                        return;
+                    }
+                    worker.postMessage(JSON.stringify({
+                        url: form.action,
+                        formData: ApplyAjax.formDataToObject(formData),
+                        headers: this._DEFAULT_HEADERS
+                    }));
+                    worker.onmessage = function (e) {
+                        let response = JSON.parse(e.data[0]);
+                        if (!response) {
+                            this.requestErrorHandler(new Error('Произошла ошибка при отправке формы'), callbackError);
+                            return;
+                        }
+                        if (response.error) {
+                            this.requestErrorHandler(new Error(response.error), callbackError);
+                            return;
+                        }
+                        let responseRecords = new URLSearchParams(response);
+                        this.requestOkHandler(new Response(responseRecords), callback, callbackError);
+                        return;
+                    }.bind(this);
+                    return worker;
+                }
+                throw new Error('Веб-воркеры не поддерживаются браузером');
             });
         }
         ;
@@ -190,7 +310,7 @@ var Templater;
                 if (!item.classList.contains(this._HIDE_CLASS)) {
                     return this.setData(object, data);
                 }
-                let dataArray;
+                let dataArray = [];
                 if (!Array.isArray(data)) {
                     dataArray[0] = data;
                 }
@@ -199,8 +319,10 @@ var Templater;
                 }
                 dataArray.forEach(function (record) {
                     let clone = item.cloneNode(true);
-                    item.parentElement.appendChild(clone);
-                    self.setData(clone, record);
+                    if (item.parentElement) {
+                        item.parentElement.appendChild(clone);
+                        self.setData(clone, record);
+                    }
                 });
             }, this);
             return object;
@@ -231,7 +353,7 @@ var Templater;
                 }
                 else {
                     this.modifyElement(object, prop, data[prop]);
-                    object.querySelectorAll('[class*=_' + prop + ']').forEach(function (item) {
+                    object.querySelectorAll("[class*='_${prop}']").forEach(function (item) {
                         this.modifyElement(item, prop, data[prop]);
                     });
                 }
@@ -240,13 +362,19 @@ var Templater;
             return object;
         }
     }
-    ApplyAjax.defaultSettings = {
+    /**
+     * Значения по умолчанию
+     *
+     * @type {{_HOST: string; _HIDE_CLASS: string; _ALLOWED_ATTRS: string[]; _DEFAULT_ERROR_CALLBACK: (message?: any) => void; _DEFAULT_HEADERS: {processData: boolean}; _DEFAULT_PARAMS: {XDEBUG_SESSION_START: string}}}
+     */
+    ApplyAjax._defaultSettings = {
+        _HOST: '',
         _HIDE_CLASS: 'clone',
-        _HOST: location.origin,
         _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
         _DEFAULT_ERROR_CALLBACK: alert,
         _DEFAULT_HEADERS: {
-            processData: true
+            processData: true,
+            'X-REQUESTED-WITH': 'xmlhttprequest'
         },
         _DEFAULT_PARAMS: {
             XDEBUG_SESSION_START: 'PHPSTORM'
