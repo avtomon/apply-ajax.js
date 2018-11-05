@@ -1,5 +1,5 @@
 {
-    "name": "avtomon/ApplyAjax.js",
+    "name": "avtomon/apply-ajax.js",
     "description": "JavaScript templater & Ajax wrapper",
     "minimum-stability": "dev",
     "config": {
