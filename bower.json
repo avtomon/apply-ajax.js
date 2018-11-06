@@ -1,0 +1,17 @@
+{
+  "name": "apply-ajax.js",
+  "description": "Abstraction of ajax-requests to the server + template of the received data",
+  "main": "dist/ApplyAjax.js",
+  "authors": [
+    "Aleksandr Avtomonov <admin@avtomon.tech>"
+  ],
+  "license": "Apache 2.0",
+  "keywords": [
+    "JavaScript",
+    "Ajax",
+    "TypeScript",
+    "fetch",
+    "es6"
+  ],
+  "homepage": "https://github.com/avtomon/apply-ajax.js"
+}
