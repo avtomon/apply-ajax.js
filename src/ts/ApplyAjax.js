@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 export var Templater;
 (function (Templater) {
     /**
-     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
+     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
      */
     class ApplyAjax {
         /**
@@ -93,26 +93,29 @@ export var Templater;
         /**
          * Хэндлер успешной отправки Ajax-запроса
          *
-         * @param {Response} response - объект ответа сервера
+         * @param {Response | Object} response - объект ответа сервера
          * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
-         * @param {ErrorCallback} error - обработчик ошибки, переданный вызывающим кодом
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
          *
-         * @returns {Promise<any>}
+         * @returns {Promise<null | Object>}
          */
         requestOkHandler(response, callback, callbackError) {
-            return response.json().then(function (data) {
-                this.data = data;
-                if (data.error !== undefined) {
-                    callbackError(data.error);
+            return __awaiter(this, void 0, void 0, function* () {
+                if (response instanceof Response) {
+                    response = yield response.json();
                 }
-                else if (data.redirect) {
-                    window.location = data.redirect;
+                this.data = response;
+                if (response['error'] !== undefined) {
+                    callbackError(response['error']);
+                }
+                else if (response['redirect']) {
+                    window.location = response['redirect'];
                 }
                 else {
-                    callback ? callback(data) : alert('Запрос успешно выполнен');
+                    callback ? callback(response) : alert('Запрос успешно выполнен');
                 }
-                return data;
-            }.bind(this));
+                return response;
+            });
         }
         /**
          * Хэндлер ошибки отправки Ajax-запроса
@@ -120,9 +123,8 @@ export var Templater;
          * @param {Error} e - объект ошибки
          * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
          */
-        requestErrorHandler(e, callbackError) {
+        static requestErrorHandler(e, callbackError) {
             callbackError(`Произошла ошибка: ${e.message}`);
-            throw e;
         }
         /**
          * Обертка Ajax-запроса к серверу
@@ -132,7 +134,7 @@ export var Templater;
          * @param {"GET" | "POST"} method - тип запроса (обычно GET или POST)
          * @param {OkCallback} callback - функция, отрабатывающая при успешном запросе
          * @param {ErrorCallback} callbackError - функция, отрабатывающая при ошибочном результате запроса
-         * @param {object} Headers - заголовки запроса
+         * @param {Headers} headers - заголовки запроса
          *
          * @returns {Promise<Response | void>}
          */
@@ -141,7 +143,9 @@ export var Templater;
                 if (!url) {
                     throw new Error('URL запроса не задан');
                 }
-                let urlObject = new URL(this._HOST + url), params = rawParams instanceof FormData ? rawParams : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                let urlObject = new URL(this._HOST + url), params = rawParams instanceof FormData
+                    ? rawParams
+                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
                 if (method === 'GET') {
                     Object.keys(params).forEach(key => urlObject.searchParams.append(key, params[key]));
                     params = '';
@@ -224,30 +228,24 @@ export var Templater;
         workerSubmit(form, before, callback, callbackError) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (window['Worker']) {
-                    const worker = new Worker("/vendor/avtomon/ApplyAjax.js/dist/js/workerSubmit.js");
+                    const worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
                     let formData = new FormData(form), result = before ? yield before(formData) : true;
                     callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
                     if (!result) {
                         return;
                     }
-                    worker.postMessage(JSON.stringify({
+                    worker.postMessage({
                         url: form.action,
                         formData: ApplyAjax.formDataToObject(formData),
                         headers: this._DEFAULT_HEADERS
-                    }));
-                    worker.onmessage = function (e) {
-                        let response = JSON.parse(e.data[0]);
-                        if (!response) {
-                            this.requestErrorHandler(new Error('Произошла ошибка при отправке формы'), callbackError);
+                    });
+                    worker.onmessage = function (response) {
+                        const liteResponse = response.data;
+                        if (!liteResponse.ok) {
+                            ApplyAjax.requestErrorHandler(new Error(liteResponse.error.message || 'Произошла ошибка при отправке формы'), callbackError);
                             return;
                         }
-                        if (response.error) {
-                            this.requestErrorHandler(new Error(response.error), callbackError);
-                            return;
-                        }
-                        let responseRecords = new URLSearchParams(response);
-                        this.requestOkHandler(new Response(responseRecords), callback, callbackError);
-                        return;
+                        this.requestOkHandler(liteResponse.data, callback, callbackError);
                     }.bind(this);
                     return worker;
                 }
@@ -287,8 +285,8 @@ export var Templater;
             return object;
         }
         /**
-         * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,
-         * а исходный скрыть, иначе просто вставить данные в шаблон
+         * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа
+         * и вставить вслед за исходным, а исходный скрыть, иначе просто вставить данные в шаблон
          *
          * @param {HTMLElement | NodeList} object - объект, в который вставляем
          * @param {Object | Object[] | string} data - данные для вставки
@@ -364,8 +362,6 @@ export var Templater;
     }
     /**
      * Значения по умолчанию
-     *
-     * @type {{_HOST: string; _HIDE_CLASS: string; _ALLOWED_ATTRS: string[]; _DEFAULT_ERROR_CALLBACK: (message?: any) => void; _DEFAULT_HEADERS: {processData: boolean}; _DEFAULT_PARAMS: {XDEBUG_SESSION_START: string}}}
      */
     ApplyAjax._defaultSettings = {
         _HOST: '',

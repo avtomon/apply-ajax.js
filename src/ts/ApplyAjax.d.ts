@@ -95,13 +95,11 @@ export declare namespace Templater {
         _DEFAULT_PARAMS?: Params;
     }
     /**
-     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных. Принцип шаблонизации такой те как у [avtomon/PQSkaTpl](https://github.com/avtomon/PQSkaTpl)
+     * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
      */
     class ApplyAjax {
         /**
          * Значения по умолчанию
-         *
-         * @type {{_HOST: string; _HIDE_CLASS: string; _ALLOWED_ATTRS: string[]; _DEFAULT_ERROR_CALLBACK: (message?: any) => void; _DEFAULT_HEADERS: {processData: boolean}; _DEFAULT_PARAMS: {XDEBUG_SESSION_START: string}}}
          */
         protected static _defaultSettings: IApplyAjaxArgs;
         /**
@@ -165,7 +163,7 @@ export declare namespace Templater {
          *
          * @returns {boolean}
          */
-        static isJson(str: string): boolean;
+        static isJson(str: any): boolean;
         /**
          * Запрос файлов с прослойкой из кэша
          *
@@ -175,8 +173,23 @@ export declare namespace Templater {
          * @returns {Promise<Templater.FileType>}
          */
         requestFile(url: string, fileCallback: FileOkCallback, type?: FileTypeHandler): Promise<FileType>;
-        protected requestOkHandler(response: Response, callback: OkCallback, error: ErrorCallback): Promise<any>;
-        protected requestErrorHandler(e: Error, callbackError: ErrorCallback): void;
+        /**
+         * Хэндлер успешной отправки Ajax-запроса
+         *
+         * @param {Response | Object} response - объект ответа сервера
+         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
+         *
+         * @returns {Promise<null | Object>}
+         */
+        protected requestOkHandler(response: Object, callback: OkCallback, callbackError: ErrorCallback): Promise<null | Object>;
+        /**
+         * Хэндлер ошибки отправки Ajax-запроса
+         *
+         * @param {Error} e - объект ошибки
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
+         */
+        protected static requestErrorHandler(e: Error, callbackError: ErrorCallback): void;
         /**
          * Обертка Ajax-запроса к серверу
          *
@@ -185,11 +198,11 @@ export declare namespace Templater {
          * @param {"GET" | "POST"} method - тип запроса (обычно GET или POST)
          * @param {OkCallback} callback - функция, отрабатывающая при успешном запросе
          * @param {ErrorCallback} callbackError - функция, отрабатывающая при ошибочном результате запроса
-         * @param {object} headers - заголовки запроса
+         * @param {Headers} headers - заголовки запроса
          *
          * @returns {Promise<Response | void>}
          */
-        request(url: USVString, rawParams: RawParams, method: RequestMethod, callback?: OkCallback, callbackError?: ErrorCallback, headers?: Headers): Promise<Response | void>;
+        request(url: String, rawParams: RawParams, method: RequestMethod, callback?: OkCallback, callbackError?: ErrorCallback, headers?: Headers): Promise<Response | void>;
         /**
          * Ajax-отправка формы
          *
@@ -201,6 +214,24 @@ export declare namespace Templater {
          * @returns {Promise<Response | void>}
          */
         ajaxSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<Response | void>;
+        /**
+         * Превратить объект FormData в обычный объект
+         *
+         * @param {FormData} formData - объект FormData
+         *
+         * @returns {Params}
+         */
+        protected static formDataToObject(formData: FormData): Params;
+        /**
+         * Отправка формы при помощи воркера
+         *
+         * @param {HTMLFormElement} form - объект формы
+         * @param {BeforeCallback} before - функция, выполняемая перед отправкой
+         * @param {OkCallback} callback - коллбэк успешной отправки формы
+         * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         *
+         * @returns {Promise<Worker | void>}
+         */
         workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<Worker | void>;
         /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
@@ -213,8 +244,8 @@ export declare namespace Templater {
          */
         protected modifyElement(object: HTMLElement, key: string, value: string): HTMLElement;
         /**
-         * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа и вставить вслед за исходным,
-         * а исходный скрыть, иначе просто вставить данные в шаблон
+         * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа
+         * и вставить вслед за исходным, а исходный скрыть, иначе просто вставить данные в шаблон
          *
          * @param {HTMLElement | NodeList} object - объект, в который вставляем
          * @param {Object | Object[] | string} data - данные для вставки

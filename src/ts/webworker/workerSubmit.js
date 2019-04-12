@@ -6,10 +6,54 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+/**
+ * Добавить данные к форме
+ *
+ * @param {FormData} formData
+ * @param {Object} appendToForm
+ * @returns {FormData}
+ */
+function addToForm(formData, appendToForm) {
+    if (typeof appendToForm === "undefined") {
+        return formData;
+    }
+    for (let field in appendToForm) {
+        if (!appendToForm.hasOwnProperty(field)) {
+            continue;
+        }
+        if (!Array.isArray(appendToForm[field])) {
+            appendToForm[field] = [appendToForm[field]];
+        }
+        appendToForm[field].forEach(function (item) {
+            if (item.name) {
+                formData.append(field, item, item.name);
+            }
+            else {
+                formData.append(field, item);
+            }
+        });
+    }
+    return formData;
+}
+/**
+ * Кастомный объект ответа от сервера
+ */
+class LiteResponse {
+    constructor(response, isOk, status) {
+        this.ok = isOk;
+        this.status = status;
+        if (isOk) {
+            this.data = response;
+            return;
+        }
+        this.error = response;
+    }
+}
 onmessage = function (e) {
     return __awaiter(this, void 0, void 0, function* () {
-        let params = JSON.parse(e.data), postError = function (errorMessage) {
-            postMessage(JSON.stringify({ error: errorMessage }));
+        let params = e.data, postError = function (errorMessage) {
+            let response = new Response(errorMessage);
+            postMessage(new LiteResponse({ message: errorMessage }, false));
         };
         if (!params) {
             postError('Не были переданы необходимые параметры выполнения');
@@ -25,22 +69,19 @@ onmessage = function (e) {
             postError('Форма пуста');
             return;
         }
-        let body = new URLSearchParams(formData);
+        let body = addToForm(new FormData(), formData);
         let options = {
             method: 'POST',
             body: body,
             credentials: 'include',
             headers: params['headers']
         };
-        let response = yield fetch(url, options)
+        fetch(url, options)
             .then(function (response) {
             return __awaiter(this, void 0, void 0, function* () {
-                if (!response.ok) {
-                    return response.statusText;
-                }
-                return yield response.json();
+                postMessage(new LiteResponse(yield response.json(), response.ok, response.status));
             });
         });
-        postMessage(response);
     });
 };
+//# sourceMappingURL=workerSubmit.js.map
