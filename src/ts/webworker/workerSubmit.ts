@@ -32,35 +32,13 @@ function addToForm(formData : FormData, appendToForm : Object) : FormData {
     return formData;
 }
 
-interface Error extends Data{
-    code : number,
-    message : string,
-    errors : string[];
-}
-
 interface Data {
     [prop : string] : any
 }
 
-/**
- * Кастомный объект ответа от сервера
- */
 class LiteResponse {
 
-    public readonly ok : boolean;
-    public readonly status : number;
-    public readonly data : Data;
-    public readonly error : Error;
-
-    public constructor(response : Data, isOk : boolean, status? : number) {
-        this.ok = isOk;
-        this.status = status;
-        if (isOk) {
-            this.data = response;
-            return;
-        }
-
-        this.error = response as Error;
+    public constructor(public readonly data : Data, public readonly ok : boolean, public readonly status : number) {
     }
 }
 
@@ -68,8 +46,7 @@ onmessage = async function (e) {
 
     let params : { [prop : string] : any } = e.data,
         postError = function (errorMessage : string) : void {
-        let response = new Response(errorMessage);
-            postMessage(new LiteResponse({message: errorMessage}, false));
+            postMessage(new LiteResponse({message: errorMessage}, false, 400));
         };
 
     if (!params) {

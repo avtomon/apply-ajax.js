@@ -2,6 +2,19 @@
 
 export namespace Templater {
 
+    interface Data {
+        [prop : string] : any
+    }
+
+    /**
+     * Кастомный объект ответа от сервера
+     */
+    export class LiteResponse {
+
+        public constructor(public readonly data : Data, public readonly ok : boolean, public readonly status : number) {
+        }
+    }
+
     /**
      * Параметры запроса
      */
@@ -13,24 +26,9 @@ export namespace Templater {
     type Headers = { [prop : string] : string | boolean };
 
     /**
-     * Доступные типы обработчиков файлов
-     */
-    type FileTypeHandler = 'text' | 'arrayBuffer' | 'blob';
-
-    /**
-     * Доступные типы файлов
-     */
-    type FileType = string | Blob | ArrayBuffer
-
-    /**
-     * Файловый кэш
-     */
-    type FileCache = { [prop : string] : FileType };
-
-    /**
      * Обработчик ошибки запроса
      */
-    export type ErrorCallback = (message : string) => void;
+    export type ErrorCallback = (response : LiteResponse) => void;
 
     /**
      * Параметры запроса на входе
@@ -45,12 +43,7 @@ export namespace Templater {
     /**
      * Обработчик успешного зароса
      */
-    export type OkCallback = (data : Array<any> | Object) => void;
-
-    /**
-     * Обработчик файлов
-     */
-    type FileOkCallback = (response : string | ArrayBuffer | Blob) => void
+    export type OkCallback = (response : LiteResponse) => void;
 
     /**
      * Сигнатура функции выполняющейся перед отправкой запроса
@@ -118,11 +111,13 @@ export namespace Templater {
         /**
          * Значения по умолчанию
          */
-        protected static _defaultSettings : IApplyAjaxArgs = {
-            _HOST: '',
+        public static _defaultSettings : IApplyAjaxArgs = {
+            _HOST: location.origin,
             _HIDE_CLASS: 'clone',
             _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
-            _DEFAULT_ERROR_CALLBACK: alert,
+            _DEFAULT_ERROR_CALLBACK: function (liteResponse : LiteResponse) {
+                alert(liteResponse.data['message'] || 'Произошла ошибка');
+            },
             _DEFAULT_HEADERS: {
                 processData: true,
                 'X-REQUESTED-WITH': 'xmlhttprequest'
@@ -131,13 +126,6 @@ export namespace Templater {
                 XDEBUG_SESSION_START: 'PHPSTORM'
             }
         };
-
-        /**
-         * Файловый кэш
-         *
-         * @type {FileCache}
-         */
-        protected static _fileCache : FileCache;
 
         /**
          * Хост по умолчанию
@@ -221,74 +209,6 @@ export namespace Templater {
         }
 
         /**
-         * Запрос файлов с прослойкой из кэша
-         *
-         * @param {string} url
-         * @param {FileOkCallback} fileCallback
-         * @param {FileTypeHandler} type
-         * @returns {Promise<Templater.FileType>}
-         */
-        public async requestFile(
-            url : string,
-            fileCallback : FileOkCallback,
-            type : FileTypeHandler = 'text'
-        ) : Promise<FileType> {
-
-            if (!ApplyAjax._fileCache[url]) {
-                ApplyAjax._fileCache[url] = await fetch(url).then(function (response : Response) : Promise<FileType> {
-
-                    return response[type]();
-                });
-            }
-
-            fileCallback(ApplyAjax._fileCache[url]);
-
-            return ApplyAjax._fileCache[url];
-        }
-
-        /**
-         * Хэндлер успешной отправки Ajax-запроса
-         *
-         * @param {Response | Object} response - объект ответа сервера
-         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
-         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
-         *
-         * @returns {Promise<null | Object>}
-         */
-        protected async requestOkHandler(
-            response : Object,
-            callback : OkCallback,
-            callbackError : ErrorCallback
-        ) : Promise<null | Object> {
-
-            if (response instanceof Response) {
-                response = await response.json();
-            }
-
-            this.data = response;
-            if (response['error'] !== undefined) {
-                callbackError(response['error']);
-            } else if (response['redirect']) {
-                window.location = response['redirect'];
-            } else {
-                callback ? callback(response) : alert('Запрос успешно выполнен');
-            }
-
-            return response;
-        }
-
-        /**
-         * Хэндлер ошибки отправки Ajax-запроса
-         *
-         * @param {Error} e - объект ошибки
-         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
-         */
-        protected static requestErrorHandler(e : Error, callbackError : ErrorCallback) {
-
-            callbackError(`Произошла ошибка: ${e.message}`);
-        }
-
-        /**
          * Обертка Ajax-запроса к серверу
          *
          * @param {string} url - адрес обработки
@@ -303,25 +223,25 @@ export namespace Templater {
         public async request(
             url : String,
             rawParams : RawParams,
-            method : RequestMethod,
-            callback? : OkCallback,
-            callbackError? : ErrorCallback,
-            headers? : Headers
+            method : RequestMethod = 'POST',
+            callback : OkCallback | null = null,
+            callbackError : ErrorCallback | null = null,
+            headers : Headers | null = null
         ) : Promise<Response | void> {
 
             if (!url) {
                 throw new Error('URL запроса не задан');
             }
 
-            let urlObject = new URL(this._HOST + url),
-                params : URLSearchParams | FormData | string
-                    = rawParams instanceof FormData
+            let urlObject = new URL(this._HOST + url);
+
+            let params : URLSearchParams | FormData | undefined = undefined;
+            if (method === 'GET') {
+                Object.keys(rawParams).forEach(key => urlObject.searchParams.append(key, rawParams[key]));
+            } else {
+                params = rawParams instanceof FormData
                     ? rawParams
                     : new URLSearchParams({...this._DEFAULT_PARAMS, ...rawParams} as Record<string, string>);
-
-            if (method === 'GET') {
-                Object.keys(params).forEach(key => urlObject.searchParams.append(key, params[key]));
-                params = '';
             }
 
             callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
@@ -340,23 +260,23 @@ export namespace Templater {
             };
 
             return fetch(urlObject.toString(), options)
-                .then(function (response : Response) {
-                    if (!response.ok) {
-                        throw new Error(response.statusText)
-                    }
+                .then(async function (response : Response) : Promise<Response> {
+                        const liteResponse = new LiteResponse(await response.json(), response.ok, response.status);
+                        if (!response.ok) {
+                            callbackError(liteResponse);
+                            return;
+                        }
 
-                    return response;
-                })
-                .then(
-                    function (response) {
-                        this.requestOkHandler(response, callback, callbackError);
+                        callback && callback(liteResponse);
 
                         return response;
                     }.bind(this),
-                    function (e : Error) : void {
-                        this.requestErrorHandler(e, callbackError);
-                    }.bind(this)
-                );
+                    async function (response : Response) : Promise<Response> {
+                        const liteResponse = new LiteResponse(await response.json(), response.ok, response.status);
+                        callbackError(liteResponse);
+
+                        return response;
+                    });
         }
 
         /**
@@ -436,7 +356,7 @@ export namespace Templater {
             before? : BeforeCallback,
             callback? : OkCallback,
             callbackError? : ErrorCallback,
-        ) : Promise<Worker | void> {
+        ) : Promise<Worker> {
 
             if (window['Worker']) {
 
@@ -459,18 +379,15 @@ export namespace Templater {
                     }
                 );
 
-                worker.onmessage = function (response : MessageEvent) {
+                worker.onmessage = function (response : MessageEvent) : void {
                     const liteResponse : LiteResponse = response.data;
                     if (!liteResponse.ok) {
-                        ApplyAjax.requestErrorHandler(
-                            new Error(liteResponse.error.message || 'Произошла ошибка при отправке формы'),
-                            callbackError
-                        );
+                        callbackError(liteResponse);
                         return;
                     }
 
-                    this.requestOkHandler(liteResponse.data, callback, callbackError);
-                }.bind(this);
+                    callback && callback(liteResponse);
+                };
 
                 return worker;
             }

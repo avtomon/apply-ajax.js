@@ -1,4 +1,16 @@
 export declare namespace Templater {
+    interface Data {
+        [prop: string]: any;
+    }
+    /**
+     * Кастомный объект ответа от сервера
+     */
+    class LiteResponse {
+        readonly data: Data;
+        readonly ok: boolean;
+        readonly status: number;
+        constructor(data: Data, ok: boolean, status: number);
+    }
     /**
      * Параметры запроса
      */
@@ -12,23 +24,9 @@ export declare namespace Templater {
         [prop: string]: string | boolean;
     };
     /**
-     * Доступные типы обработчиков файлов
-     */
-    type FileTypeHandler = 'text' | 'arrayBuffer' | 'blob';
-    /**
-     * Доступные типы файлов
-     */
-    type FileType = string | Blob | ArrayBuffer;
-    /**
-     * Файловый кэш
-     */
-    type FileCache = {
-        [prop: string]: FileType;
-    };
-    /**
      * Обработчик ошибки запроса
      */
-    type ErrorCallback = (message: string) => void;
+    type ErrorCallback = (response: LiteResponse) => void;
     /**
      * Параметры запроса на входе
      */
@@ -40,11 +38,7 @@ export declare namespace Templater {
     /**
      * Обработчик успешного зароса
      */
-    type OkCallback = (data: Array<any> | Object) => void;
-    /**
-     * Обработчик файлов
-     */
-    type FileOkCallback = (response: string | ArrayBuffer | Blob) => void;
+    type OkCallback = (response: LiteResponse) => void;
     /**
      * Сигнатура функции выполняющейся перед отправкой запроса
      */
@@ -101,13 +95,7 @@ export declare namespace Templater {
         /**
          * Значения по умолчанию
          */
-        protected static _defaultSettings: IApplyAjaxArgs;
-        /**
-         * Файловый кэш
-         *
-         * @type {FileCache}
-         */
-        protected static _fileCache: FileCache;
+        static _defaultSettings: IApplyAjaxArgs;
         /**
          * Хост по умолчанию
          *
@@ -165,32 +153,6 @@ export declare namespace Templater {
          */
         static isJson(str: any): boolean;
         /**
-         * Запрос файлов с прослойкой из кэша
-         *
-         * @param {string} url
-         * @param {FileOkCallback} fileCallback
-         * @param {FileTypeHandler} type
-         * @returns {Promise<Templater.FileType>}
-         */
-        requestFile(url: string, fileCallback: FileOkCallback, type?: FileTypeHandler): Promise<FileType>;
-        /**
-         * Хэндлер успешной отправки Ajax-запроса
-         *
-         * @param {Response | Object} response - объект ответа сервера
-         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
-         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
-         *
-         * @returns {Promise<null | Object>}
-         */
-        protected requestOkHandler(response: Object, callback: OkCallback, callbackError: ErrorCallback): Promise<null | Object>;
-        /**
-         * Хэндлер ошибки отправки Ajax-запроса
-         *
-         * @param {Error} e - объект ошибки
-         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
-         */
-        protected static requestErrorHandler(e: Error, callbackError: ErrorCallback): void;
-        /**
          * Обертка Ajax-запроса к серверу
          *
          * @param {string} url - адрес обработки
@@ -202,7 +164,7 @@ export declare namespace Templater {
          *
          * @returns {Promise<Response | void>}
          */
-        request(url: String, rawParams: RawParams, method: RequestMethod, callback?: OkCallback, callbackError?: ErrorCallback, headers?: Headers): Promise<Response | void>;
+        request(url: String, rawParams: RawParams, method?: RequestMethod, callback?: OkCallback | null, callbackError?: ErrorCallback | null, headers?: Headers | null): Promise<Response | void>;
         /**
          * Ajax-отправка формы
          *
@@ -232,7 +194,7 @@ export declare namespace Templater {
          *
          * @returns {Promise<Worker | void>}
          */
-        workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<Worker | void>;
+        workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<Worker>;
         /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *

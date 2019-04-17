@@ -36,25 +36,17 @@ function addToForm(formData, appendToForm) {
     }
     return formData;
 }
-/**
- * Кастомный объект ответа от сервера
- */
 class LiteResponse {
-    constructor(response, isOk, status) {
-        this.ok = isOk;
+    constructor(data, ok, status) {
+        this.data = data;
+        this.ok = ok;
         this.status = status;
-        if (isOk) {
-            this.data = response;
-            return;
-        }
-        this.error = response;
     }
 }
 onmessage = function (e) {
     return __awaiter(this, void 0, void 0, function* () {
         let params = e.data, postError = function (errorMessage) {
-            let response = new Response(errorMessage);
-            postMessage(new LiteResponse({ message: errorMessage }, false));
+            postMessage(new LiteResponse({ message: errorMessage }, false, 400));
         };
         if (!params) {
             postError('Не были переданы необходимые параметры выполнения');

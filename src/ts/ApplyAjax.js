@@ -10,6 +10,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 export var Templater;
 (function (Templater) {
     /**
+     * Кастомный объект ответа от сервера
+     */
+    class LiteResponse {
+        constructor(data, ok, status) {
+            this.data = data;
+            this.ok = ok;
+            this.status = status;
+        }
+    }
+    Templater.LiteResponse = LiteResponse;
+    /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
      */
     class ApplyAjax {
@@ -72,61 +83,6 @@ export var Templater;
             return false;
         }
         /**
-         * Запрос файлов с прослойкой из кэша
-         *
-         * @param {string} url
-         * @param {FileOkCallback} fileCallback
-         * @param {FileTypeHandler} type
-         * @returns {Promise<Templater.FileType>}
-         */
-        requestFile(url, fileCallback, type = 'text') {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (!ApplyAjax._fileCache[url]) {
-                    ApplyAjax._fileCache[url] = yield fetch(url).then(function (response) {
-                        return response[type]();
-                    });
-                }
-                fileCallback(ApplyAjax._fileCache[url]);
-                return ApplyAjax._fileCache[url];
-            });
-        }
-        /**
-         * Хэндлер успешной отправки Ajax-запроса
-         *
-         * @param {Response | Object} response - объект ответа сервера
-         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
-         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
-         *
-         * @returns {Promise<null | Object>}
-         */
-        requestOkHandler(response, callback, callbackError) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (response instanceof Response) {
-                    response = yield response.json();
-                }
-                this.data = response;
-                if (response['error'] !== undefined) {
-                    callbackError(response['error']);
-                }
-                else if (response['redirect']) {
-                    window.location = response['redirect'];
-                }
-                else {
-                    callback ? callback(response) : alert('Запрос успешно выполнен');
-                }
-                return response;
-            });
-        }
-        /**
-         * Хэндлер ошибки отправки Ajax-запроса
-         *
-         * @param {Error} e - объект ошибки
-         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
-         */
-        static requestErrorHandler(e, callbackError) {
-            callbackError(`Произошла ошибка: ${e.message}`);
-        }
-        /**
          * Обертка Ajax-запроса к серверу
          *
          * @param {string} url - адрес обработки
@@ -138,17 +94,20 @@ export var Templater;
          *
          * @returns {Promise<Response | void>}
          */
-        request(url, rawParams, method, callback, callbackError, headers) {
+        request(url, rawParams, method = 'POST', callback = null, callbackError = null, headers = null) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (!url) {
                     throw new Error('URL запроса не задан');
                 }
-                let urlObject = new URL(this._HOST + url), params = rawParams instanceof FormData
-                    ? rawParams
-                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                let urlObject = new URL(this._HOST + url);
+                let params = undefined;
                 if (method === 'GET') {
-                    Object.keys(params).forEach(key => urlObject.searchParams.append(key, params[key]));
-                    params = '';
+                    Object.keys(rawParams).forEach(key => urlObject.searchParams.append(key, rawParams[key]));
+                }
+                else {
+                    params = rawParams instanceof FormData
+                        ? rawParams
+                        : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
                 }
                 callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
                 let options = {
@@ -161,17 +120,22 @@ export var Templater;
                 };
                 return fetch(urlObject.toString(), options)
                     .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error(response.statusText);
-                    }
-                    return response;
-                })
-                    .then(function (response) {
-                    this.requestOkHandler(response, callback, callbackError);
-                    return response;
-                }.bind(this), function (e) {
-                    this.requestErrorHandler(e, callbackError);
-                }.bind(this));
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const liteResponse = new LiteResponse(yield response.json(), response.ok, response.status);
+                        if (!response.ok) {
+                            callbackError(liteResponse);
+                            return;
+                        }
+                        callback && callback(liteResponse);
+                        return response;
+                    });
+                }.bind(this), function (response) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const liteResponse = new LiteResponse(yield response.json(), response.ok, response.status);
+                        callbackError(liteResponse);
+                        return response;
+                    });
+                });
             });
         }
         /**
@@ -242,11 +206,11 @@ export var Templater;
                     worker.onmessage = function (response) {
                         const liteResponse = response.data;
                         if (!liteResponse.ok) {
-                            ApplyAjax.requestErrorHandler(new Error(liteResponse.error.message || 'Произошла ошибка при отправке формы'), callbackError);
+                            callbackError(liteResponse);
                             return;
                         }
-                        this.requestOkHandler(liteResponse.data, callback, callbackError);
-                    }.bind(this);
+                        callback && callback(liteResponse);
+                    };
                     return worker;
                 }
                 throw new Error('Веб-воркеры не поддерживаются браузером');
@@ -364,10 +328,12 @@ export var Templater;
      * Значения по умолчанию
      */
     ApplyAjax._defaultSettings = {
-        _HOST: '',
+        _HOST: location.origin,
         _HIDE_CLASS: 'clone',
         _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
-        _DEFAULT_ERROR_CALLBACK: alert,
+        _DEFAULT_ERROR_CALLBACK: function (liteResponse) {
+            alert(liteResponse.data['message'] || 'Произошла ошибка');
+        },
         _DEFAULT_HEADERS: {
             processData: true,
             'X-REQUESTED-WITH': 'xmlhttprequest'
