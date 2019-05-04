@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -36,10 +37,11 @@ function addToForm(formData, appendToForm) {
     return formData;
 }
 class LiteResponse {
-    constructor(data, ok, status) {
+    constructor(data, ok, status, isJson) {
         this.data = data;
         this.ok = ok;
         this.status = status;
+        this.isJson = isJson;
     }
 }
 onmessage = function (e) {
@@ -71,7 +73,8 @@ onmessage = function (e) {
         fetch(url, options)
             .then(function (response) {
             return __awaiter(this, void 0, void 0, function* () {
-                postMessage(new LiteResponse(yield response.json(), response.ok, response.status));
+                const isJson = response.headers.get('Content-Type').includes('application/json');
+                postMessage(new LiteResponse(isJson ? yield response.json() : yield response.text(), response.ok, response.status, isJson));
             });
         });
     });

@@ -11,7 +11,12 @@ export namespace Templater {
      */
     export class LiteResponse {
 
-        public constructor(public readonly data : Data, public readonly ok : boolean, public readonly status : number) {
+        public constructor(
+            public readonly data : Data,
+            public readonly ok : boolean,
+            public readonly status : number,
+            public readonly isJson : boolean
+        ) {
         }
     }
 
@@ -172,9 +177,9 @@ export namespace Templater {
         /**
          * Результат выполнения запроса
          *
-         * @type Object | Object[] | string
+         * @type LiteResponse
          */
-        public data : Object | Object[] | string = {};
+        public response : LiteResponse;
 
         /**
          * Конструктор
@@ -209,6 +214,52 @@ export namespace Templater {
         }
 
         /**
+         * Хэндлер успешной отправки Ajax-запроса
+         *
+         * @param {LiteResponse} response - объект ответа сервера
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
+         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
+         *
+         * @returns {Promise<null | Object>}
+         */
+        protected async requestOkHandler(
+            response : LiteResponse,
+            callbackError : ErrorCallback,
+            callback? : OkCallback | null,
+        ) : Promise<LiteResponse> {
+
+            if (response.status < 200 && response.status >= 400) {
+                callbackError(response);
+                return response;
+            }
+
+            this.response = response;
+            if (response.status === 307 && response.data['redirect']) {
+                window.location = response['redirect'];
+            } else {
+                callback && callback(response);
+            }
+
+            return response;
+        }
+
+        /**
+         * @param {Response} response
+         *
+         * @returns {Promise<Templater.LiteResponse>}
+         */
+        protected static async getLiteResponse(response : Response) : Promise<LiteResponse>
+        {
+            const isJson = response.headers.get('Content-Type').includes('application/json');
+            return new LiteResponse(
+                    isJson ? await response.json() : await response.text(),
+                    response.ok,
+                    response.status,
+                    isJson
+                );
+        }
+
+        /**
          * Обертка Ajax-запроса к серверу
          *
          * @param {string} url - адрес обработки
@@ -237,7 +288,17 @@ export namespace Templater {
 
             let params : URLSearchParams | FormData | undefined = undefined;
             if (method === 'GET') {
-                Object.keys(rawParams).forEach(key => urlObject.searchParams.append(key, rawParams[key]));
+                Object.keys(rawParams).forEach(function(key) {
+                    if (Array.isArray(rawParams[key])) {
+                        for (let index in rawParams[key]) {
+                            urlObject.searchParams.append(key, rawParams[key][index]);
+                        }
+
+                        return;
+                    }
+
+                    urlObject.searchParams.append(key, rawParams[key])
+                });
             } else {
                 params = rawParams instanceof FormData
                     ? rawParams
@@ -260,19 +321,13 @@ export namespace Templater {
             };
 
             return fetch(urlObject.toString(), options)
-                .then(async function (response : Response) : Promise<Response> {
-                        const liteResponse = new LiteResponse(await response.json(), response.ok, response.status);
-                        if (!response.ok) {
-                            callbackError(liteResponse);
-                            return;
-                        }
+                .then(async function (response : Response) : Promise<LiteResponse> {
+                        const liteResponse = await ApplyAjax.getLiteResponse(response);
 
-                        callback && callback(liteResponse);
-
-                        return response;
+                        return this.requestOkHandler(liteResponse, callbackError, callback);
                     }.bind(this),
                     async function (response : Response) : Promise<Response> {
-                        const liteResponse = new LiteResponse(await response.json(), response.ok, response.status);
+                        const liteResponse = await ApplyAjax.getLiteResponse(response);
                         callbackError(liteResponse);
 
                         return response;
@@ -381,13 +436,9 @@ export namespace Templater {
 
                 worker.onmessage = function (response : MessageEvent) : void {
                     const liteResponse : LiteResponse = response.data;
-                    if (!liteResponse.ok) {
-                        callbackError(liteResponse);
-                        return;
-                    }
 
-                    callback && callback(liteResponse);
-                };
+                    return this.requestOkHandler(liteResponse, callbackError, callback);
+                }.bind(this);
 
                 return worker;
             }

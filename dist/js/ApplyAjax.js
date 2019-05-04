@@ -13,10 +13,11 @@ export var Templater;
      * Кастомный объект ответа от сервера
      */
     class LiteResponse {
-        constructor(data, ok, status) {
+        constructor(data, ok, status, isJson) {
             this.data = data;
             this.ok = ok;
             this.status = status;
+            this.isJson = isJson;
         }
     }
     Templater.LiteResponse = LiteResponse;
@@ -54,12 +55,6 @@ export var Templater;
              * @type Params
              */
             this._DEFAULT_PARAMS = {};
-            /**
-             * Результат выполнения запроса
-             *
-             * @type Object | Object[] | string
-             */
-            this.data = {};
             Object.keys(ApplyAjax._defaultSettings).forEach(function (option) {
                 this[option] = settings[option] || ApplyAjax._defaultSettings[option];
             }, this);
@@ -83,6 +78,42 @@ export var Templater;
             return false;
         }
         /**
+         * Хэндлер успешной отправки Ajax-запроса
+         *
+         * @param {LiteResponse} response - объект ответа сервера
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
+         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
+         *
+         * @returns {Promise<null | Object>}
+         */
+        requestOkHandler(response, callbackError, callback) {
+            return __awaiter(this, void 0, void 0, function* () {
+                if (response.status < 200 && response.status >= 400) {
+                    callbackError(response);
+                    return response;
+                }
+                this.response = response;
+                if (response.status === 307 && response.data['redirect']) {
+                    window.location = response['redirect'];
+                }
+                else {
+                    callback && callback(response);
+                }
+                return response;
+            });
+        }
+        /**
+         * @param {Response} response
+         *
+         * @returns {Promise<Templater.LiteResponse>}
+         */
+        static getLiteResponse(response) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const isJson = response.headers.get('Content-Type').includes('application/json');
+                return new LiteResponse(isJson ? yield response.json() : yield response.text(), response.ok, response.status, isJson);
+            });
+        }
+        /**
          * Обертка Ajax-запроса к серверу
          *
          * @param {string} url - адрес обработки
@@ -102,7 +133,15 @@ export var Templater;
                 let urlObject = new URL(this._HOST + url);
                 let params = undefined;
                 if (method === 'GET') {
-                    Object.keys(rawParams).forEach(key => urlObject.searchParams.append(key, rawParams[key]));
+                    Object.keys(rawParams).forEach(function (key) {
+                        if (Array.isArray(rawParams[key])) {
+                            for (let index in rawParams[key]) {
+                                urlObject.searchParams.append(key, rawParams[key][index]);
+                            }
+                            return;
+                        }
+                        urlObject.searchParams.append(key, rawParams[key]);
+                    });
                 }
                 else {
                     params = rawParams instanceof FormData
@@ -121,17 +160,12 @@ export var Templater;
                 return fetch(urlObject.toString(), options)
                     .then(function (response) {
                     return __awaiter(this, void 0, void 0, function* () {
-                        const liteResponse = new LiteResponse(yield response.json(), response.ok, response.status);
-                        if (!response.ok) {
-                            callbackError(liteResponse);
-                            return;
-                        }
-                        callback && callback(liteResponse);
-                        return response;
+                        const liteResponse = yield ApplyAjax.getLiteResponse(response);
+                        return this.requestOkHandler(liteResponse, callbackError, callback);
                     });
                 }.bind(this), function (response) {
                     return __awaiter(this, void 0, void 0, function* () {
-                        const liteResponse = new LiteResponse(yield response.json(), response.ok, response.status);
+                        const liteResponse = yield ApplyAjax.getLiteResponse(response);
                         callbackError(liteResponse);
                         return response;
                     });
@@ -205,12 +239,8 @@ export var Templater;
                     });
                     worker.onmessage = function (response) {
                         const liteResponse = response.data;
-                        if (!liteResponse.ok) {
-                            callbackError(liteResponse);
-                            return;
-                        }
-                        callback && callback(liteResponse);
-                    };
+                        return this.requestOkHandler(liteResponse, callbackError, callback);
+                    }.bind(this);
                     return worker;
                 }
                 throw new Error('Веб-воркеры не поддерживаются браузером');

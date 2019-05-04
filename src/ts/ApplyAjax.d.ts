@@ -9,7 +9,8 @@ export declare namespace Templater {
         readonly data: Data;
         readonly ok: boolean;
         readonly status: number;
-        constructor(data: Data, ok: boolean, status: number);
+        readonly isJson: boolean;
+        constructor(data: Data, ok: boolean, status: number, isJson: boolean);
     }
     /**
      * Параметры запроса
@@ -135,9 +136,9 @@ export declare namespace Templater {
         /**
          * Результат выполнения запроса
          *
-         * @type Object | Object[] | string
+         * @type LiteResponse
          */
-        data: Object | Object[] | string;
+        response: LiteResponse;
         /**
          * Конструктор
          *
@@ -152,6 +153,22 @@ export declare namespace Templater {
          * @returns {boolean}
          */
         static isJson(str: any): boolean;
+        /**
+         * Хэндлер успешной отправки Ajax-запроса
+         *
+         * @param {LiteResponse} response - объект ответа сервера
+         * @param {ErrorCallback} callbackError - обработчик ошибки, переданный вызывающим кодом
+         * @param {OkCallback} callback - обработчик успешного выполнения запроса, переданный вызывающим кодом
+         *
+         * @returns {Promise<null | Object>}
+         */
+        protected requestOkHandler(response: LiteResponse, callbackError: ErrorCallback, callback?: OkCallback | null): Promise<LiteResponse>;
+        /**
+         * @param {Response} response
+         *
+         * @returns {Promise<Templater.LiteResponse>}
+         */
+        protected static getLiteResponse(response: Response): Promise<LiteResponse>;
         /**
          * Обертка Ajax-запроса к серверу
          *

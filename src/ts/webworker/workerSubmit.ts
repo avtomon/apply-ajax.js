@@ -38,7 +38,12 @@ interface Data {
 
 class LiteResponse {
 
-    public constructor(public readonly data : Data, public readonly ok : boolean, public readonly status : number) {
+    public constructor(
+        public readonly data : Data,
+        public readonly ok : boolean,
+        public readonly status : number,
+        public readonly isJson : boolean
+    ) {
     }
 }
 
@@ -77,6 +82,14 @@ onmessage = async function (e) {
 
     fetch(url, options)
         .then(async function (response : Response) : Promise<void> {
-            postMessage(new LiteResponse(await response.json(), response.ok, response.status));
+            const isJson = response.headers.get('Content-Type').includes('application/json');
+            postMessage(
+                new LiteResponse(
+                    isJson ? await response.json() : await response.text(),
+                    response.ok,
+                    response.status,
+                    isJson
+                )
+            );
         });
 };

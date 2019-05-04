@@ -13,5 +13,6 @@ declare class LiteResponse {
     readonly data: Data;
     readonly ok: boolean;
     readonly status: number;
-    constructor(data: Data, ok: boolean, status: number);
+    readonly isJson: boolean;
+    constructor(data: Data, ok: boolean, status: number, isJson: boolean);
 }
