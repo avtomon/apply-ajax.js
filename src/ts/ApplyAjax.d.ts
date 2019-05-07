@@ -140,6 +140,12 @@ export declare namespace Templater {
          */
         response: LiteResponse;
         /**
+         * Воркер фоновой отправки формы
+         *
+         * @type Worker
+         */
+        worker: Worker;
+        /**
          * Конструктор
          *
          * @param {Templater.IApplyAjaxArgs} settings - настройки
@@ -211,7 +217,7 @@ export declare namespace Templater {
          *
          * @returns {Promise<Worker | void>}
          */
-        workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<Worker>;
+        workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<void>;
         /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *

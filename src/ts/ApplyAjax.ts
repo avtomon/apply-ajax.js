@@ -182,6 +182,13 @@ export namespace Templater {
         public response : LiteResponse;
 
         /**
+         * Воркер фоновой отправки формы
+         *
+         * @type Worker
+         */
+        public worker : Worker;
+
+        /**
          * Конструктор
          *
          * @param {Templater.IApplyAjaxArgs} settings - настройки
@@ -411,11 +418,13 @@ export namespace Templater {
             before? : BeforeCallback,
             callback? : OkCallback,
             callbackError? : ErrorCallback,
-        ) : Promise<Worker> {
+        ) : Promise<void> {
 
             if (window['Worker']) {
 
-                const worker : Worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
+                if (!this.worker) {
+                    this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
+                }
 
                 let formData : FormData = new FormData(form),
                     result : boolean = before ? await before(formData) : true;
@@ -426,7 +435,7 @@ export namespace Templater {
                     return;
                 }
 
-                worker.postMessage(
+                this.worker.postMessage(
                     {
                         url: form.action,
                         formData: ApplyAjax.formDataToObject(formData),
@@ -434,13 +443,11 @@ export namespace Templater {
                     }
                 );
 
-                worker.onmessage = function (response : MessageEvent) : void {
+                this.worker.onmessage = function (response : MessageEvent) : void {
                     const liteResponse : LiteResponse = response.data;
 
                     return this.requestOkHandler(liteResponse, callbackError, callback);
                 }.bind(this);
-
-                return worker;
             }
 
             throw new Error('Веб-воркеры не поддерживаются браузером');
@@ -497,7 +504,7 @@ export namespace Templater {
          */
         public setMultiData(
             object : HTMLElement | NodeList,
-            data : Object | Object[] | string = this.data
+            data : Object | Object[] | string = this.response.data
         ) : HTMLElement | NodeList {
 
             if (typeof data !== 'object' || !Object.keys(data).length) {

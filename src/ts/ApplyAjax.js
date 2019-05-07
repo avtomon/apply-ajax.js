@@ -226,22 +226,23 @@ export var Templater;
         workerSubmit(form, before, callback, callbackError) {
             return __awaiter(this, void 0, void 0, function* () {
                 if (window['Worker']) {
-                    const worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
+                    if (!this.worker) {
+                        this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
+                    }
                     let formData = new FormData(form), result = before ? yield before(formData) : true;
                     callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
                     if (!result) {
                         return;
                     }
-                    worker.postMessage({
+                    this.worker.postMessage({
                         url: form.action,
                         formData: ApplyAjax.formDataToObject(formData),
                         headers: this._DEFAULT_HEADERS
                     });
-                    worker.onmessage = function (response) {
+                    this.worker.onmessage = function (response) {
                         const liteResponse = response.data;
                         return this.requestOkHandler(liteResponse, callbackError, callback);
                     }.bind(this);
-                    return worker;
                 }
                 throw new Error('Веб-воркеры не поддерживаются браузером');
             });
@@ -287,7 +288,7 @@ export var Templater;
          *
          * @returns {HTMLElement | NodeList}
          */
-        setMultiData(object, data = this.data) {
+        setMultiData(object, data = this.response.data) {
             if (typeof data !== 'object' || !Object.keys(data).length) {
                 return object;
             }
