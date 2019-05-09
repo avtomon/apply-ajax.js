@@ -208,8 +208,8 @@ export var Templater;
          */
         static formDataToObject(formData) {
             let toObject = {};
-            Array.from(formData.entries()).forEach(function (value) {
-                toObject[value[0]] = value[1];
+            Array.from(formData.keys()).forEach(function (key) {
+                toObject[key] = key.includes('[]') ? formData.getAll(key) : formData.get(key);
             });
             return toObject;
         }
@@ -243,6 +243,7 @@ export var Templater;
                         const liteResponse = response.data;
                         return this.requestOkHandler(liteResponse, callbackError, callback);
                     }.bind(this);
+                    return;
                 }
                 throw new Error('Веб-воркеры не поддерживаются браузером');
             });
