@@ -185,9 +185,9 @@ export declare namespace Templater {
          * @param {ErrorCallback} callbackError - функция, отрабатывающая при ошибочном результате запроса
          * @param {Headers} headers - заголовки запроса
          *
-         * @returns {Promise<Response | void>}
+         * @returns {Promise<LiteResponse | void>}
          */
-        request(url: String, rawParams: RawParams, method?: RequestMethod, callback?: OkCallback | null, callbackError?: ErrorCallback | null, headers?: Headers | null): Promise<Response | void>;
+        request(url: String, rawParams: RawParams, method?: RequestMethod, callback?: OkCallback | null, callbackError?: ErrorCallback | null, headers?: Headers | null): Promise<LiteResponse | void>;
         /**
          * Ajax-отправка формы
          *
@@ -246,6 +246,6 @@ export declare namespace Templater {
          *
          * @returns {HTMLElement}
          */
-        setData(object: HTMLElement, data?: Object | Object[] | string): HTMLElement;
+        setData(object: HTMLElement, data: Object | Object[] | string): HTMLElement;
     }
 }

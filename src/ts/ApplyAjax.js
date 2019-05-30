@@ -1,12 +1,4 @@
 'use strict';
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 export var Templater;
 (function (Templater) {
     /**
@@ -86,32 +78,28 @@ export var Templater;
          *
          * @returns {Promise<null | Object>}
          */
-        requestOkHandler(response, callbackError, callback) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (response.status < 200 && response.status >= 400) {
-                    callbackError(response);
-                    return response;
-                }
-                this.response = response;
-                if (response.status === 307 && response.data['redirect']) {
-                    window.location = response['redirect'];
-                }
-                else {
-                    callback && callback(response);
-                }
+        async requestOkHandler(response, callbackError, callback) {
+            if (response.status < 200 && response.status >= 400) {
+                callbackError(response);
                 return response;
-            });
+            }
+            this.response = response;
+            if (response.status === 307 && response.data['redirect']) {
+                window.location = response['redirect'];
+            }
+            else {
+                callback && callback(response);
+            }
+            return response;
         }
         /**
          * @param {Response} response
          *
          * @returns {Promise<Templater.LiteResponse>}
          */
-        static getLiteResponse(response) {
-            return __awaiter(this, void 0, void 0, function* () {
-                const isJson = response.headers.get('Content-Type').includes('application/json');
-                return new LiteResponse(isJson ? yield response.json() : yield response.text(), response.ok, response.status, isJson);
-            });
+        static async getLiteResponse(response) {
+            const contentType = response.headers.get('Content-Type'), isJson = (contentType && contentType.includes('application/json'));
+            return new LiteResponse(isJson ? await response.json() : await response.text(), response.ok, response.status, isJson);
         }
         /**
          * Обертка Ajax-запроса к серверу
@@ -123,53 +111,48 @@ export var Templater;
          * @param {ErrorCallback} callbackError - функция, отрабатывающая при ошибочном результате запроса
          * @param {Headers} headers - заголовки запроса
          *
-         * @returns {Promise<Response | void>}
+         * @returns {Promise<LiteResponse | void>}
          */
-        request(url, rawParams, method = 'POST', callback = null, callbackError = null, headers = null) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (!url) {
-                    throw new Error('URL запроса не задан');
-                }
-                let urlObject = new URL(this._HOST + url);
-                let params = undefined;
-                if (method === 'GET') {
-                    Object.keys(rawParams).forEach(function (key) {
-                        if (Array.isArray(rawParams[key])) {
-                            for (let index in rawParams[key]) {
-                                urlObject.searchParams.append(key, rawParams[key][index]);
-                            }
-                            return;
+        async request(url, rawParams, method = 'POST', callback = null, callbackError = null, headers = null) {
+            if (!url) {
+                throw new Error('URL запроса не задан');
+            }
+            let urlObject = new URL(this._HOST + url);
+            let params = undefined;
+            if (method === 'GET') {
+                Object.keys(rawParams).forEach(function (key) {
+                    if (Array.isArray(rawParams[key])) {
+                        for (let index in rawParams[key]) {
+                            urlObject.searchParams.append(key, rawParams[key][index]);
                         }
-                        urlObject.searchParams.append(key, rawParams[key]);
-                    });
-                }
-                else {
-                    params = rawParams instanceof FormData
-                        ? rawParams
-                        : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
-                }
-                callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
-                let options = {
-                    method: method,
-                    body: params,
-                    credentials: 'include',
-                    headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
-                        hash: location.hash.replace('#', '')
-                    }, headers))
-                };
-                return fetch(urlObject.toString(), options)
-                    .then(function (response) {
-                    return __awaiter(this, void 0, void 0, function* () {
-                        const liteResponse = yield ApplyAjax.getLiteResponse(response);
-                        return this.requestOkHandler(liteResponse, callbackError, callback);
-                    });
-                }.bind(this), function (response) {
-                    return __awaiter(this, void 0, void 0, function* () {
-                        const liteResponse = yield ApplyAjax.getLiteResponse(response);
-                        callbackError(liteResponse);
-                        return response;
-                    });
+                        return;
+                    }
+                    urlObject.searchParams.append(key, rawParams[key]);
                 });
+            }
+            else {
+                params = rawParams instanceof FormData
+                    ? rawParams
+                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+            }
+            callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
+            let options = {
+                method: method,
+                body: params,
+                credentials: 'include',
+                headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
+                    hash: location.hash.replace('#', '')
+                }, headers))
+            };
+            return fetch(urlObject.toString(), options)
+                .then(async function (response) {
+                const liteResponse = await ApplyAjax.getLiteResponse(response);
+                this.requestOkHandler(liteResponse, callbackError, callback);
+                return liteResponse;
+            }.bind(this), async function (response) {
+                const liteResponse = await ApplyAjax.getLiteResponse(response);
+                callbackError(liteResponse);
+                return liteResponse;
             });
         }
         /**
@@ -184,15 +167,13 @@ export var Templater;
          */
         ajaxSubmit(form, before, callback, callbackError) {
             let self = this;
-            let promise = new Promise(function (resolve, reject) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    let formData = new FormData(form), result = before ? yield before(formData) : true;
-                    if (result) {
-                        resolve(formData);
-                        return;
-                    }
-                    reject();
-                });
+            let promise = new Promise(async function (resolve, reject) {
+                let formData = new FormData(form), result = before ? await before(formData) : true;
+                if (result) {
+                    resolve(formData);
+                    return;
+                }
+                reject();
             });
             return promise.then(function (formData) {
                 return self.request(form.action, formData, 'POST', callback, callbackError);
@@ -223,30 +204,28 @@ export var Templater;
          *
          * @returns {Promise<Worker | void>}
          */
-        workerSubmit(form, before, callback, callbackError) {
-            return __awaiter(this, void 0, void 0, function* () {
-                if (window['Worker']) {
-                    if (!this.worker) {
-                        this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
-                    }
-                    let formData = new FormData(form), result = before ? yield before(formData) : true;
-                    callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
-                    if (!result) {
-                        return;
-                    }
-                    this.worker.postMessage({
-                        url: form.action,
-                        formData: ApplyAjax.formDataToObject(formData),
-                        headers: this._DEFAULT_HEADERS
-                    });
-                    this.worker.onmessage = function (response) {
-                        const liteResponse = response.data;
-                        return this.requestOkHandler(liteResponse, callbackError, callback);
-                    }.bind(this);
+        async workerSubmit(form, before, callback, callbackError) {
+            if (window['Worker']) {
+                if (!this.worker) {
+                    this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
+                }
+                let formData = new FormData(form), result = before ? await before(formData) : true;
+                callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
+                if (!result) {
                     return;
                 }
-                throw new Error('Веб-воркеры не поддерживаются браузером');
-            });
+                this.worker.postMessage({
+                    url: form.action,
+                    formData: ApplyAjax.formDataToObject(formData),
+                    headers: this._DEFAULT_HEADERS
+                });
+                this.worker.onmessage = function (response) {
+                    const liteResponse = response.data;
+                    return this.requestOkHandler(liteResponse, callbackError, callback);
+                }.bind(this);
+                return;
+            }
+            throw new Error('Веб-воркеры не поддерживаются браузером');
         }
         ;
         /**
@@ -329,7 +308,7 @@ export var Templater;
          *
          * @returns {HTMLElement}
          */
-        setData(object, data = this.data) {
+        setData(object, data) {
             if (typeof data !== 'object' || !Object.keys(data).length) {
                 return object;
             }
@@ -360,7 +339,9 @@ export var Templater;
      * Значения по умолчанию
      */
     ApplyAjax._defaultSettings = {
-        _HOST: location.origin,
+        _HOST: window.location.origin && window.location.origin !== 'null'
+            ? window.location.origin
+            : window.location.ancestorOrigins[0],
         _HIDE_CLASS: 'clone',
         _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
         _DEFAULT_ERROR_CALLBACK: function (liteResponse) {

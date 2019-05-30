@@ -117,7 +117,9 @@ export namespace Templater {
          * Значения по умолчанию
          */
         public static _defaultSettings : IApplyAjaxArgs = {
-            _HOST: location.origin,
+            _HOST: window.location.origin && window.location.origin !== 'null'
+                ? window.location.origin
+                : window.location.ancestorOrigins[0],
             _HIDE_CLASS: 'clone',
             _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
             _DEFAULT_ERROR_CALLBACK: function (liteResponse : LiteResponse) {
@@ -255,15 +257,15 @@ export namespace Templater {
          *
          * @returns {Promise<Templater.LiteResponse>}
          */
-        protected static async getLiteResponse(response : Response) : Promise<LiteResponse>
-        {
-            const isJson = response.headers.get('Content-Type').includes('application/json');
+        protected static async getLiteResponse(response : Response) : Promise<LiteResponse> {
+            const contentType : string | null = response.headers.get('Content-Type'),
+                isJson : boolean = (contentType && contentType.includes('application/json')) as boolean;
             return new LiteResponse(
-                    isJson ? await response.json() : await response.text(),
-                    response.ok,
-                    response.status,
-                    isJson
-                );
+                isJson ? await response.json() : await response.text(),
+                response.ok,
+                response.status,
+                isJson
+            );
         }
 
         /**
@@ -276,7 +278,7 @@ export namespace Templater {
          * @param {ErrorCallback} callbackError - функция, отрабатывающая при ошибочном результате запроса
          * @param {Headers} headers - заголовки запроса
          *
-         * @returns {Promise<Response | void>}
+         * @returns {Promise<LiteResponse | void>}
          */
         public async request(
             url : String,
@@ -285,7 +287,7 @@ export namespace Templater {
             callback : OkCallback | null = null,
             callbackError : ErrorCallback | null = null,
             headers : Headers | null = null
-        ) : Promise<Response | void> {
+        ) : Promise<LiteResponse | void> {
 
             if (!url) {
                 throw new Error('URL запроса не задан');
@@ -295,7 +297,7 @@ export namespace Templater {
 
             let params : URLSearchParams | FormData | undefined = undefined;
             if (method === 'GET') {
-                Object.keys(rawParams).forEach(function(key) {
+                Object.keys(rawParams).forEach(function (key) {
                     if (Array.isArray(rawParams[key])) {
                         for (let index in rawParams[key]) {
                             urlObject.searchParams.append(key, rawParams[key][index]);
@@ -329,16 +331,18 @@ export namespace Templater {
 
             return fetch(urlObject.toString(), options)
                 .then(async function (response : Response) : Promise<LiteResponse> {
-                        const liteResponse = await ApplyAjax.getLiteResponse(response);
+                        const liteResponse : LiteResponse = await ApplyAjax.getLiteResponse(response);
 
-                        return this.requestOkHandler(liteResponse, callbackError, callback);
+                        this.requestOkHandler(liteResponse, callbackError, callback);
+
+                        return liteResponse;
                     }.bind(this),
-                    async function (response : Response) : Promise<Response> {
-                        const liteResponse = await ApplyAjax.getLiteResponse(response);
+                    async function (response : Response) : Promise<LiteResponse> {
+                        const liteResponse : LiteResponse = await ApplyAjax.getLiteResponse(response);
                         callbackError(liteResponse);
 
-                        return response;
-                    });
+                        return liteResponse;
+                    }) as Promise<LiteResponse>;
         }
 
         /**
@@ -554,7 +558,7 @@ export namespace Templater {
          *
          * @returns {HTMLElement}
          */
-        public setData(object : HTMLElement, data : Object | Object[] | string = this.data) : HTMLElement {
+        public setData(object : HTMLElement, data : Object | Object[] | string) : HTMLElement {
 
             if (typeof data !== 'object' || !Object.keys(data).length) {
                 return object;
