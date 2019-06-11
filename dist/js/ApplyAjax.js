@@ -326,7 +326,7 @@ export var Templater;
                 }
                 else {
                     this.modifyElement(object, prop, data[prop]);
-                    object.querySelectorAll("[class*='_${prop}']").forEach(function (item) {
+                    object.querySelectorAll(`[class*='_${prop}']`).forEach(function (item) {
                         this.modifyElement(item, prop, data[prop]);
                     });
                 }

@@ -134,6 +134,24 @@ export namespace Templater {
             }
         };
 
+        public static _ALLOWED_ATTRS = [
+            'class',
+            'text',
+            'val',
+            'value',
+            'id',
+            'src',
+            'title',
+            'href',
+            'data-object-src',
+            'data-type',
+            'data-file-type',
+            'data-form',
+            'data-src',
+            'data-object-src',
+            'data-account-id',
+        ];
+
         /**
          * Хост по умолчанию
          *
@@ -578,7 +596,7 @@ export namespace Templater {
                 } else {
                     this.modifyElement(object, prop, data[prop]);
 
-                    object.querySelectorAll("[class*='_${prop}']").forEach(function (item) {
+                    object.querySelectorAll(`[class*='_${prop}']`).forEach(function (item : HTMLElement) {
                         this.modifyElement(item, prop, data[prop]);
                     });
                 }

@@ -97,6 +97,7 @@ export declare namespace Templater {
          * Значения по умолчанию
          */
         static _defaultSettings: IApplyAjaxArgs;
+        static _ALLOWED_ATTRS: string[];
         /**
          * Хост по умолчанию
          *

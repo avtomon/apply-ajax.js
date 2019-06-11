@@ -326,7 +326,7 @@ export var Templater;
                 }
                 else {
                     this.modifyElement(object, prop, data[prop]);
-                    object.querySelectorAll("[class*='_${prop}']").forEach(function (item) {
+                    object.querySelectorAll(`[class*='_${prop}']`).forEach(function (item) {
                         this.modifyElement(item, prop, data[prop]);
                     });
                 }
@@ -355,6 +355,23 @@ export var Templater;
             XDEBUG_SESSION_START: 'PHPSTORM'
         }
     };
+    ApplyAjax._ALLOWED_ATTRS = [
+        'class',
+        'text',
+        'val',
+        'value',
+        'id',
+        'src',
+        'title',
+        'href',
+        'data-object-src',
+        'data-type',
+        'data-file-type',
+        'data-form',
+        'data-src',
+        'data-object-src',
+        'data-account-id',
+    ];
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
 //# sourceMappingURL=ApplyAjax.js.map
