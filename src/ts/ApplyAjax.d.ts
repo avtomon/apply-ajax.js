@@ -97,7 +97,6 @@ export declare namespace Templater {
          * Значения по умолчанию
          */
         static _defaultSettings: IApplyAjaxArgs;
-        static _ALLOWED_ATTRS: string[];
         /**
          * Хост по умолчанию
          *
@@ -226,9 +225,9 @@ export declare namespace Templater {
          * @param {string} key - ключ для маркеров вставки
          * @param {string} value - значение для вставки
          *
-         * @returns {HTMLElement}
+         * @returns {void}
          */
-        protected modifyElement(object: HTMLElement, key: string, value: string): HTMLElement;
+        protected modifyElement(object: HTMLElement, key: string, value: string): void;
         /**
          * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа
          * и вставить вслед за исходным, а исходный скрыть, иначе просто вставить данные в шаблон

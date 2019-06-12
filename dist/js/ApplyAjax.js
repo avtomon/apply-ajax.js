@@ -235,16 +235,16 @@ export var Templater;
          * @param {string} key - ключ для маркеров вставки
          * @param {string} value - значение для вставки
          *
-         * @returns {HTMLElement}
+         * @returns {void}
          */
         modifyElement(object, key, value) {
-            if (object.classList.contains(`in_text_{$key}`)) {
+            if (object.classList.contains(`in_text_${key}`)) {
                 object.innerHTML = value;
             }
-            if (object.classList.contains(`in_class_{$key}`)) {
+            if (object.classList.contains(`in_class_${key}`)) {
                 object.classList.add(value);
             }
-            if (object.classList.contains(`in_href_{$key}`)) {
+            if (object.classList.contains(`in_href_${key}`)) {
                 let objectAnchor = object;
                 objectAnchor.href = objectAnchor.href + value;
             }
@@ -257,7 +257,6 @@ export var Templater;
                 }
                 object.setAttribute(attr, value);
             });
-            return object;
         }
         /**
          * Вставить массив данных в шаблон. Если кортежей данных несколько, то копировать шаблон для каждого кортежа
@@ -294,9 +293,9 @@ export var Templater;
                     let clone = item.cloneNode(true);
                     if (item.parentElement) {
                         item.parentElement.appendChild(clone);
-                        self.setData(clone, record);
+                        this.setData(clone, record);
                     }
-                });
+                }, this);
             }, this);
             return object;
         }
@@ -326,12 +325,17 @@ export var Templater;
                 }
                 else {
                     this.modifyElement(object, prop, data[prop]);
-                    object.querySelectorAll(`[class*='_${prop}']`).forEach(function (item) {
-                        this.modifyElement(item, prop, data[prop]);
+                    let selectorsArray = [];
+                    this._ALLOWED_ATTRS.forEach(function (attr) {
+                        selectorsArray.push(`[class*='in_${attr}_${prop}']`);
                     });
+                    object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item) {
+                        this.modifyElement(item, prop, data[prop]);
+                    }, this);
                 }
             }, this);
             object.classList.remove(this._HIDE_CLASS);
+
             return object;
         }
     }
@@ -343,7 +347,23 @@ export var Templater;
             ? window.location.origin
             : window.location.ancestorOrigins[0],
         _HIDE_CLASS: 'clone',
-        _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
+        _ALLOWED_ATTRS: [
+            'class',
+            'text',
+            'val',
+            'value',
+            'id',
+            'src',
+            'title',
+            'href',
+            'data-object-src',
+            'data-type',
+            'data-file-type',
+            'data-form',
+            'data-src',
+            'data-object-src',
+            'data-account-id'
+        ],
         _DEFAULT_ERROR_CALLBACK: function (liteResponse) {
             alert(liteResponse.data['message'] || 'Произошла ошибка');
         },

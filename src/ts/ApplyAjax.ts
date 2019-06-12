@@ -121,7 +121,23 @@ export namespace Templater {
                 ? window.location.origin
                 : window.location.ancestorOrigins[0],
             _HIDE_CLASS: 'clone',
-            _ALLOWED_ATTRS: ['class', 'text', 'val', 'value', 'id', 'src', 'title', 'href', 'data-object-src'],
+            _ALLOWED_ATTRS: [
+                'class',
+                'text',
+                'val',
+                'value',
+                'id',
+                'src',
+                'title',
+                'href',
+                'data-object-src',
+                'data-type',
+                'data-file-type',
+                'data-form',
+                'data-src',
+                'data-object-src',
+                'data-account-id'
+            ],
             _DEFAULT_ERROR_CALLBACK: function (liteResponse : LiteResponse) {
                 alert(liteResponse.data['message'] || 'Произошла ошибка');
             },
@@ -133,24 +149,6 @@ export namespace Templater {
                 XDEBUG_SESSION_START: 'PHPSTORM'
             }
         };
-
-        public static _ALLOWED_ATTRS = [
-            'class',
-            'text',
-            'val',
-            'value',
-            'id',
-            'src',
-            'title',
-            'href',
-            'data-object-src',
-            'data-type',
-            'data-file-type',
-            'data-form',
-            'data-src',
-            'data-object-src',
-            'data-account-id',
-        ];
 
         /**
          * Хост по умолчанию
@@ -234,7 +232,6 @@ export namespace Templater {
                     return true;
                 }
             } catch (e) {
-
             }
 
             return false;
@@ -278,6 +275,7 @@ export namespace Templater {
         protected static async getLiteResponse(response : Response) : Promise<LiteResponse> {
             const contentType : string | null = response.headers.get('Content-Type'),
                 isJson : boolean = (contentType && contentType.includes('application/json')) as boolean;
+
             return new LiteResponse(
                 isJson ? await response.json() : await response.text(),
                 response.ok,
@@ -311,7 +309,7 @@ export namespace Templater {
                 throw new Error('URL запроса не задан');
             }
 
-            let urlObject = new URL(this._HOST + url);
+            let urlObject : URL = new URL(this._HOST + url);
 
             let params : URLSearchParams | FormData | undefined = undefined;
             if (method === 'GET') {
@@ -484,20 +482,20 @@ export namespace Templater {
          * @param {string} key - ключ для маркеров вставки
          * @param {string} value - значение для вставки
          *
-         * @returns {HTMLElement}
+         * @returns {void}
          */
 
-        protected modifyElement(object : HTMLElement, key : string, value : string) : HTMLElement {
+        protected modifyElement(object : HTMLElement, key : string, value : string) : void {
 
-            if (object.classList.contains(`in_text_{$key}`)) {
+            if (object.classList.contains(`in_text_${key}`)) {
                 object.innerHTML = value;
             }
 
-            if (object.classList.contains(`in_class_{$key}`)) {
+            if (object.classList.contains(`in_class_${key}`)) {
                 object.classList.add(value);
             }
 
-            if (object.classList.contains(`in_href_{$key}`)) {
+            if (object.classList.contains(`in_href_${key}`)) {
                 let objectAnchor = object as HTMLAnchorElement;
                 objectAnchor.href = objectAnchor.href + value;
             }
@@ -513,8 +511,6 @@ export namespace Templater {
 
                 object.setAttribute(attr, value);
             });
-
-            return object;
         }
 
         /**
@@ -557,12 +553,12 @@ export namespace Templater {
                 }
 
                 dataArray.forEach(function (record : Object) {
-                    let clone = item.cloneNode(true);
+                    let clone : Node = item.cloneNode(true);
                     if (item.parentElement) {
                         item.parentElement.appendChild(clone);
-                        self.setData(clone as HTMLElement, record);
+                        this.setData(clone as HTMLElement, record);
                     }
-                });
+                }, this);
             }, this);
 
             return object;
@@ -587,7 +583,7 @@ export namespace Templater {
                 dataObject = data[0];
             }
 
-            Object.keys(dataObject).forEach(function (prop) {
+            Object.keys(dataObject).forEach(function (this : ApplyAjax, prop : string) {
                 if (dataObject[prop] instanceof Object) {
                     this.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
                 } else if (ApplyAjax.isJson(data[prop])) {
@@ -596,9 +592,13 @@ export namespace Templater {
                 } else {
                     this.modifyElement(object, prop, data[prop]);
 
-                    object.querySelectorAll(`[class*='_${prop}']`).forEach(function (item : HTMLElement) {
-                        this.modifyElement(item, prop, data[prop]);
+                    let selectorsArray : string[] = [];
+                    this._ALLOWED_ATTRS.forEach(function (attr) {
+                        selectorsArray.push(`[class*='in_${attr}_${prop}']`)
                     });
+                    object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item : HTMLElement) {
+                        this.modifyElement(item, prop, data[prop]);
+                    }, this);
                 }
             }, this);
 
