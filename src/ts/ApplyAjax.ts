@@ -252,7 +252,7 @@ export namespace Templater {
             callback? : OkCallback | null,
         ) : Promise<LiteResponse> {
 
-            if (response.status < 200 && response.status >= 400) {
+            if (response.status < 200 || response.status >= 400) {
                 callbackError(response);
                 return response;
             }
@@ -368,6 +368,7 @@ export namespace Templater {
          * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         * @param {string | null} url - адрес обработки
          *
          * @returns {Promise<Response | void>}
          */
@@ -376,6 +377,7 @@ export namespace Templater {
             before? : BeforeCallback,
             callback? : OkCallback,
             callbackError? : ErrorCallback,
+            url : String | null = null
         ) : Promise<Response | void> {
 
             let self = this;
@@ -396,7 +398,7 @@ export namespace Templater {
             return promise.then(
                 function (formData : FormData) : Promise<Response | void> {
                     return self.request(
-                        form.action,
+                        url || form.action,
                         formData,
                         'POST',
                         callback,
@@ -430,6 +432,7 @@ export namespace Templater {
          * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         * @param {string | null} url - адрес обработки
          *
          * @returns {Promise<Worker | void>}
          */
@@ -438,6 +441,7 @@ export namespace Templater {
             before? : BeforeCallback,
             callback? : OkCallback,
             callbackError? : ErrorCallback,
+            url : String | null = null
         ) : Promise<void> {
 
             if (window['Worker']) {
@@ -457,7 +461,7 @@ export namespace Templater {
 
                 this.worker.postMessage(
                     {
-                        url: form.action,
+                        url: url || form.action,
                         formData: ApplyAjax.formDataToObject(formData),
                         headers: this._DEFAULT_HEADERS
                     }

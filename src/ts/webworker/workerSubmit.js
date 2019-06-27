@@ -1,3 +1,12 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 /**
  * Добавить данные к форме
  *
@@ -35,35 +44,39 @@ class LiteResponse {
         this.isJson = isJson;
     }
 }
-onmessage = async function (e) {
-    let params = e.data, postError = function (errorMessage) {
-        postMessage(new LiteResponse({ message: errorMessage }, false, 400));
-    };
-    if (!params) {
-        postError('Не были переданы необходимые параметры выполнения');
-        return;
-    }
-    let url = params['url'];
-    if (!url) {
-        postError('Не был передан адрес обработчика отправки формы');
-        return;
-    }
-    let formData = params['formData'];
-    if (!formData || !Object.keys(formData).length) {
-        postError('Форма пуста');
-        return;
-    }
-    let body = addToForm(new FormData(), formData);
-    let options = {
-        method: 'POST',
-        body: body,
-        credentials: 'include',
-        headers: params['headers']
-    };
-    fetch(url, options)
-        .then(async function (response) {
-        const isJson = response.headers.get('Content-Type').includes('application/json');
-        postMessage(new LiteResponse(isJson ? await response.json() : await response.text(), response.ok, response.status, isJson));
+onmessage = function (e) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let params = e.data, postError = function (errorMessage) {
+            postMessage(new LiteResponse({ message: errorMessage }, false, 400));
+        };
+        if (!params) {
+            postError('Не были переданы необходимые параметры выполнения');
+            return;
+        }
+        let url = params['url'];
+        if (!url) {
+            postError('Не был передан адрес обработчика отправки формы');
+            return;
+        }
+        let formData = params['formData'];
+        if (!formData || !Object.keys(formData).length) {
+            postError('Форма пуста');
+            return;
+        }
+        let body = addToForm(new FormData(), formData);
+        let options = {
+            method: 'POST',
+            body: body,
+            credentials: 'include',
+            headers: params['headers']
+        };
+        fetch(url, options)
+            .then(function (response) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const isJson = response.headers.get('Content-Type').includes('application/json');
+                postMessage(new LiteResponse(isJson ? yield response.json() : yield response.text(), response.ok, response.status, isJson));
+            });
+        });
     });
 };
 //# sourceMappingURL=workerSubmit.js.map

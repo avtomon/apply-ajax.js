@@ -195,10 +195,11 @@ export declare namespace Templater {
          * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         * @param {string | null} url - адрес обработки
          *
          * @returns {Promise<Response | void>}
          */
-        ajaxSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<Response | void>;
+        ajaxSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback, url?: String | null): Promise<Response | void>;
         /**
          * Превратить объект FormData в обычный объект
          *
@@ -214,10 +215,11 @@ export declare namespace Templater {
          * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         * @param {string | null} url - адрес обработки
          *
          * @returns {Promise<Worker | void>}
          */
-        workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback): Promise<void>;
+        workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback, url?: String | null): Promise<void>;
         /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *

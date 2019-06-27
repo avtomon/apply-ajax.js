@@ -79,7 +79,7 @@ export var Templater;
          * @returns {Promise<null | Object>}
          */
         async requestOkHandler(response, callbackError, callback) {
-            if (response.status < 200 && response.status >= 400) {
+            if (response.status < 200 || response.status >= 400) {
                 callbackError(response);
                 return response;
             }
@@ -162,10 +162,11 @@ export var Templater;
          * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         * @param {string | null} url - адрес обработки
          *
          * @returns {Promise<Response | void>}
          */
-        ajaxSubmit(form, before, callback, callbackError) {
+        ajaxSubmit(form, before, callback, callbackError, url = null) {
             let self = this;
             let promise = new Promise(async function (resolve, reject) {
                 let formData = new FormData(form), result = before ? await before(formData) : true;
@@ -176,7 +177,7 @@ export var Templater;
                 reject();
             });
             return promise.then(function (formData) {
-                return self.request(form.action, formData, 'POST', callback, callbackError);
+                return self.request(url || form.action, formData, 'POST', callback, callbackError);
             });
         }
         ;
@@ -201,10 +202,11 @@ export var Templater;
          * @param {BeforeCallback} before - функция, выполняемая перед отправкой
          * @param {OkCallback} callback - коллбэк успешной отправки формы
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
+         * @param {string | null} url - адрес обработки
          *
          * @returns {Promise<Worker | void>}
          */
-        async workerSubmit(form, before, callback, callbackError) {
+        async workerSubmit(form, before, callback, callbackError, url = null) {
             if (window['Worker']) {
                 if (!this.worker) {
                     this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
@@ -215,7 +217,7 @@ export var Templater;
                     return;
                 }
                 this.worker.postMessage({
-                    url: form.action,
+                    url: url || form.action,
                     formData: ApplyAjax.formDataToObject(formData),
                     headers: this._DEFAULT_HEADERS
                 });
