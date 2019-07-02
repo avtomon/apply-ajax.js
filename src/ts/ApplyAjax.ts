@@ -398,7 +398,7 @@ export namespace Templater {
             return promise.then(
                 function (formData : FormData) : Promise<Response | void> {
                     return self.request(
-                        url || form.action,
+                        url || form.getAttribute('action'),
                         formData,
                         'POST',
                         callback,

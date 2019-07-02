@@ -177,7 +177,7 @@ export var Templater;
                 reject();
             });
             return promise.then(function (formData) {
-                return self.request(url || form.action, formData, 'POST', callback, callbackError);
+                return self.request(url || form.getAttribute('action'), formData, 'POST', callback, callbackError);
             });
         }
         ;
