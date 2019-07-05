@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Добавить данные к форме
  *
@@ -66,3 +67,4 @@ onmessage = async function (e) {
         postMessage(new LiteResponse(isJson ? await response.json() : await response.text(), response.ok, response.status, isJson));
     });
 };
+//# sourceMappingURL=workerSubmit.js.map

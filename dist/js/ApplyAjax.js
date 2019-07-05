@@ -84,8 +84,8 @@ export var Templater;
                 return response;
             }
             this.response = response;
-            if (response.status === 307 && response.data['redirect']) {
-                window.location = response['redirect'];
+            if (response.data['redirect']) {
+                window.location = response.data['redirect'];
             }
             else {
                 callback && callback(response);

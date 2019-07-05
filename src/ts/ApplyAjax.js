@@ -84,8 +84,8 @@ export var Templater;
                 return response;
             }
             this.response = response;
-            if (response.status === 307 && response.data['redirect']) {
-                window.location = response['redirect'];
+            if (response.data['redirect']) {
+                window.location = response.data['redirect'];
             }
             else {
                 callback && callback(response);
@@ -317,25 +317,25 @@ export var Templater;
             if (Array.isArray(data)) {
                 dataObject = data[0];
             }
+            let self = this;
             Object.keys(dataObject).forEach(function (prop) {
                 if (dataObject[prop] instanceof Object) {
-                    this.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                    self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                    return;
                 }
-                else if (ApplyAjax.isJson(data[prop])) {
+                if (ApplyAjax.isJson(data[prop])) {
                     data[prop] = JSON.parse(data[prop]);
-                    this.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                    self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
                 }
-                else {
-                    this.modifyElement(object, prop, data[prop]);
-                    let selectorsArray = [];
-                    this._ALLOWED_ATTRS.forEach(function (attr) {
-                        selectorsArray.push(`[class*='in_${attr}_${prop}']`);
-                    });
-                    object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item) {
-                        this.modifyElement(item, prop, data[prop]);
-                    }, this);
-                }
-            }, this);
+                self.modifyElement(object, prop, data[prop]);
+                let selectorsArray = [];
+                self._ALLOWED_ATTRS.forEach(function (attr) {
+                    selectorsArray.push(`[class*='in_${attr}_${prop}']`);
+                });
+                object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item) {
+                    self.modifyElement(item, prop, data[prop]);
+                });
+            });
             object.classList.remove(this._HIDE_CLASS);
             return object;
         }
@@ -378,3 +378,4 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
+//# sourceMappingURL=ApplyAjax.js.map

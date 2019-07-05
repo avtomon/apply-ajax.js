@@ -258,8 +258,8 @@ export namespace Templater {
             }
 
             this.response = response;
-            if (response.status === 307 && response.data['redirect']) {
-                window.location = response['redirect'];
+            if (response.data['redirect']) {
+                window.location = response.data['redirect'];
             } else {
                 callback && callback(response);
             }
@@ -587,24 +587,28 @@ export namespace Templater {
                 dataObject = data[0];
             }
 
+            let self = this;
             Object.keys(dataObject).forEach(function (this : ApplyAjax, prop : string) {
                 if (dataObject[prop] instanceof Object) {
-                    this.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
-                } else if (ApplyAjax.isJson(data[prop])) {
-                    data[prop] = JSON.parse(data[prop]);
-                    this.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
-                } else {
-                    this.modifyElement(object, prop, data[prop]);
-
-                    let selectorsArray : string[] = [];
-                    this._ALLOWED_ATTRS.forEach(function (attr) {
-                        selectorsArray.push(`[class*='in_${attr}_${prop}']`)
-                    });
-                    object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item : HTMLElement) {
-                        this.modifyElement(item, prop, data[prop]);
-                    }, this);
+                    self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                    return;
                 }
-            }, this);
+
+                if (ApplyAjax.isJson(data[prop])) {
+                    data[prop] = JSON.parse(data[prop]);
+                    self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                }
+
+                self.modifyElement(object, prop, data[prop]);
+
+                let selectorsArray : string[] = [];
+                self._ALLOWED_ATTRS.forEach(function (attr) {
+                    selectorsArray.push(`[class*='in_${attr}_${prop}']`)
+                });
+                object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item : HTMLElement) {
+                    self.modifyElement(item, prop, data[prop]);
+                });
+            });
 
             object.classList.remove(this._HIDE_CLASS);
 
