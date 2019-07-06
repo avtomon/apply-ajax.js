@@ -48,6 +48,10 @@ export declare namespace Templater {
      * Элементы формы
      */
     type FormElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    interface IMatches {
+        matches: string[];
+        insertable: boolean;
+    }
     /**
      * Интерфейс свойст класс ApplyAjax
      */
@@ -64,12 +68,6 @@ export declare namespace Templater {
          * @type {string}
          */
         _HIDE_CLASS?: string;
-        /**
-         * В какие атрибуты можно вставлять данные
-         *
-         * @type {string[]}
-         */
-        _ALLOWED_ATTRS?: string[];
         /**
          * Хэндлер обработки ошибки
          *
@@ -109,12 +107,6 @@ export declare namespace Templater {
          * @type {string}
          */
         protected _HIDE_CLASS: string;
-        /**
-         * В какие атрибуты можно вставлять данные
-         *
-         * @type {string[]}
-         */
-        protected _ALLOWED_ATTRS: string[];
         /**
          * Хэндлер обработки ошибки
          *
@@ -221,6 +213,13 @@ export declare namespace Templater {
          */
         workerSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback, url?: String | null): Promise<void>;
         /**
+         * @param {string[]} labels
+         * @param {string[]} matches
+         *
+         * @returns {IMatches}
+         */
+        protected static isInsertable(labels: string[], matches: string[]): IMatches;
+        /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *
          * @param {HTMLElement} object - объект, в который вставляем
@@ -235,11 +234,11 @@ export declare namespace Templater {
          * и вставить вслед за исходным, а исходный скрыть, иначе просто вставить данные в шаблон
          *
          * @param {HTMLElement | NodeList} object - объект, в который вставляем
-         * @param {Object | Object[] | string} data - данные для вставки
+         * @param {Object | Object[]} data - данные для вставки
          *
          * @returns {HTMLElement | NodeList}
          */
-        setMultiData(object: HTMLElement | NodeList, data?: Object | Object[] | string): HTMLElement | NodeList;
+        setMultiData(object: HTMLElement | NodeList, data?: Object | Object[]): HTMLElement | NodeList;
         /**
          * Вставить набор данных в шаблон, предполагается что на вход дается только один кортеж данных
          *

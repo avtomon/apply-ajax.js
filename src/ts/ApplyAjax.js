@@ -36,12 +36,6 @@ export var Templater;
              */
             this._HIDE_CLASS = '';
             /**
-             * В какие атрибуты можно вставлять данные
-             *
-             * @type {string[]}
-             */
-            this._ALLOWED_ATTRS = [];
-            /**
              * Параметры запроса по умолчанию
              *
              * @type Params
@@ -231,6 +225,24 @@ export var Templater;
         }
         ;
         /**
+         * @param {string[]} labels
+         * @param {string[]} matches
+         *
+         * @returns {IMatches}
+         */
+        static isInsertable(labels, matches) {
+            if (labels.filter(value => matches.includes(value)).length) {
+                return {
+                    matches: labels.filter(value => !matches.includes(value)),
+                    insertable: true
+                };
+            }
+            return {
+                matches: matches,
+                insertable: false
+            };
+        }
+        /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *
          * @param {HTMLElement} object - объект, в который вставляем
@@ -240,23 +252,43 @@ export var Templater;
          * @returns {void}
          */
         modifyElement(object, key, value) {
-            if (object.classList.contains(`in_text_${key}`)) {
+            let matches = (object.getAttribute(`data-in-${key}`) || '').trim(), insertable;
+            if (!matches) {
+                return;
+            }
+            matches = matches.split(',').map(function (item) {
+                return item.trim();
+            });
+            ({ matches, insertable } = ApplyAjax.isInsertable(['html'], matches));
+            if (insertable) {
                 object.innerHTML = value;
             }
-            if (object.classList.contains(`in_class_${key}`)) {
-                object.classList.add(value);
+            ({ matches, insertable } = ApplyAjax.isInsertable(['text'], matches));
+            if (insertable) {
+                object.innerText = value;
             }
-            if (object.classList.contains(`in_href_${key}`)) {
-                let objectAnchor = object;
-                objectAnchor.href = objectAnchor.href + value;
+            ({ matches, insertable } = ApplyAjax.isInsertable(['class'], matches));
+            if (insertable) {
+                let classes = value.split(' ').map(function (item) {
+                    return item.trim();
+                });
+                classes.forEach(function (className) {
+                    object.classList.add(className);
+                });
             }
-            if (object.classList.contains('val') || object.classList.contains('value')) {
+            ({ matches, insertable } = ApplyAjax.isInsertable(['href'], matches));
+            if (insertable) {
+                object.href = object.href + value;
+            }
+            ({ matches, insertable } = ApplyAjax.isInsertable(['data-href'], matches));
+            if (insertable) {
+                object.dataset.href = object.dataset.href + value;
+            }
+            ({ matches, insertable } = ApplyAjax.isInsertable(['val', 'value'], matches));
+            if (insertable) {
                 object.value = value;
             }
-            this._ALLOWED_ATTRS.forEach(function (attr) {
-                if (['text', 'class', 'href', 'val', 'value'].indexOf(attr) >= 0) {
-                    return;
-                }
+            matches.forEach(function (attr) {
                 object.setAttribute(attr, value);
             });
         }
@@ -265,7 +297,7 @@ export var Templater;
          * и вставить вслед за исходным, а исходный скрыть, иначе просто вставить данные в шаблон
          *
          * @param {HTMLElement | NodeList} object - объект, в который вставляем
-         * @param {Object | Object[] | string} data - данные для вставки
+         * @param {Object | Object[]} data - данные для вставки
          *
          * @returns {HTMLElement | NodeList}
          */
@@ -281,24 +313,20 @@ export var Templater;
                 objects = Array.from(object);
             }
             objects.forEach(function (item) {
-                if (!item.classList.contains(this._HIDE_CLASS)) {
-                    return this.setData(object, data);
+                if (!item.classList.contains(self._HIDE_CLASS)) {
+                    return self.setData(item, data);
                 }
-                let dataArray = [];
                 if (!Array.isArray(data)) {
-                    dataArray[0] = data;
+                    data = [data];
                 }
-                else {
-                    dataArray = data;
-                }
-                dataArray.forEach(function (record) {
+                data.forEach(function (record) {
                     let clone = item.cloneNode(true);
                     if (item.parentElement) {
+                        self.setData(clone, record);
                         item.parentElement.appendChild(clone);
-                        this.setData(clone, record);
                     }
-                }, this);
-            }, this);
+                });
+            });
             return object;
         }
         /**
@@ -328,11 +356,7 @@ export var Templater;
                     self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
                 }
                 self.modifyElement(object, prop, data[prop]);
-                let selectorsArray = [];
-                self._ALLOWED_ATTRS.forEach(function (attr) {
-                    selectorsArray.push(`[class*='in_${attr}_${prop}']`);
-                });
-                object.querySelectorAll(selectorsArray.join(', ')).forEach(function (item) {
+                object.querySelectorAll(`[data-in-${prop}]`).forEach(function (item) {
                     self.modifyElement(item, prop, data[prop]);
                 });
             });
@@ -348,23 +372,6 @@ export var Templater;
             ? window.location.origin
             : window.location.ancestorOrigins[0],
         _HIDE_CLASS: 'clone',
-        _ALLOWED_ATTRS: [
-            'class',
-            'text',
-            'val',
-            'value',
-            'id',
-            'src',
-            'title',
-            'href',
-            'data-object-src',
-            'data-type',
-            'data-file-type',
-            'data-form',
-            'data-src',
-            'data-object-src',
-            'data-account-id'
-        ],
         _DEFAULT_ERROR_CALLBACK: function (liteResponse) {
             alert(liteResponse.data['message'] || 'Произошла ошибка');
         },
@@ -378,4 +385,3 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
-//# sourceMappingURL=ApplyAjax.js.map
