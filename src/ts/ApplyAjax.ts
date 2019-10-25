@@ -608,19 +608,19 @@ export namespace Templater {
             let self = this;
             Object.keys(dataObject).forEach(function (prop : string) {
                 if (dataObject[prop] instanceof Object) {
-                    self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                    self.setMultiData(object.querySelectorAll('.' + prop), dataObject[prop]);
                     return;
                 }
 
-                if (ApplyAjax.isJson(data[prop])) {
-                    data[prop] = JSON.parse(data[prop]);
-                    self.setMultiData(object.querySelectorAll('.' + prop), data[prop]);
+                if (ApplyAjax.isJson(dataObject[prop])) {
+                    dataObject[prop] = JSON.parse(dataObject[prop]);
+                    self.setMultiData(object.querySelectorAll('.' + prop), dataObject[prop]);
                 }
 
-                self.modifyElement(object, prop, data[prop]);
+                self.modifyElement(object, prop, dataObject[prop]);
 
                 object.querySelectorAll(`[data-in-${prop}]`).forEach(function (item : HTMLElement) {
-                    self.modifyElement(item, prop, data[prop]);
+                    self.modifyElement(item, prop, dataObject[prop]);
                 });
             });
 
