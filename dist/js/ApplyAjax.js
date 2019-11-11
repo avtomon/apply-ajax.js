@@ -133,7 +133,7 @@ export var Templater;
             let options = {
                 method: method,
                 body: params,
-                credentials: 'include',
+                //credentials: 'include',
                 headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
                     hash: location.hash.replace('#', '')
                 }, headers))
