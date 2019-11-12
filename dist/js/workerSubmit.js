@@ -67,7 +67,7 @@ onmessage = function (e) {
         let options = {
             method: 'POST',
             body: body,
-            //credentials: 'include',
+            credentials: 'include',
             headers: params['headers']
         };
         fetch(url, options)

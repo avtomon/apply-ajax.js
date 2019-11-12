@@ -309,7 +309,7 @@ export namespace Templater {
             let options : RequestInit = {
                 method: method,
                 body: params,
-                //credentials: 'include',
+                credentials: 'include',
                 headers: new Headers({
                     ...this._DEFAULT_HEADERS,
                     ...{

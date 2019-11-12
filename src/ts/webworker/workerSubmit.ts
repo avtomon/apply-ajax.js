@@ -78,7 +78,7 @@ onmessage = async function (e) {
     let options : RequestInit = {
         method: 'POST',
         body: body,
-        //credentials: 'include',
+        credentials: 'include',
         headers: params['headers']
     };
 
