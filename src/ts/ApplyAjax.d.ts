@@ -126,6 +126,26 @@ export declare namespace Templater {
          */
         protected _DEFAULT_PARAMS: Params;
         /**
+         * @type {string}
+         */
+        protected DATA_DEPENDS_ON_ATTRIBUTE: string;
+        /**
+         * @type {string}
+         */
+        protected DEFAULT_ATTRIBUTE_PREFIX: string;
+        /**
+         * @type {string}
+         */
+        protected NO_DISPLAY_CLASS: string;
+        /**
+         * @type {string}
+         */
+        protected PARENT_SELECTOR: string;
+        /**
+         * @type {string}
+         */
+        protected NO_DATA_SELECTOR: string;
+        /**
          * Результат выполнения запроса
          *
          * @type LiteResponse
@@ -248,5 +268,23 @@ export declare namespace Templater {
          * @returns {HTMLElement}
          */
         setData(object: HTMLElement, data: Object | Object[] | string): HTMLElement;
+        /**
+         * Если данных нет, то прячет зависимые от этих данных элементы
+         *
+         * @param data
+         * @param {HTMLElement} element
+         *
+         * @returns {boolean}
+         */
+        protected dataDependsCheck(data: any, element: HTMLElement): boolean;
+        /**
+         * Показать блок с сообщением об отсутствии данных, если данных нет
+         *
+         * @param {Object[]} data
+         * @param {HTMLElement} parent
+         *
+         * @returns {boolean}
+         */
+        protected isShowNoData(data: Object[], parent: HTMLElement): boolean;
     }
 }

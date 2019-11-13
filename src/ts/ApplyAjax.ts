@@ -1,5 +1,7 @@
 'use strict';
 
+import {Utils} from "/vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
+
 export namespace Templater {
 
     interface Data {
@@ -167,6 +169,31 @@ export namespace Templater {
         protected _DEFAULT_PARAMS : Params = {};
 
         /**
+         * @type {string}
+         */
+        protected DATA_DEPENDS_ON_ATTRIBUTE = 'data-depends-on';
+
+        /**
+         * @type {string}
+         */
+        protected DEFAULT_ATTRIBUTE_PREFIX = 'data-default-';
+
+        /**
+         * @type {string}
+         */
+        protected NO_DISPLAY_CLASS = 'no-display';
+
+        /**
+         * @type {string}
+         */
+        protected PARENT_SELECTOR = '.parent';
+
+        /**
+         * @type {string}
+         */
+        protected NO_DATA_SELECTOR = '.no-data';
+
+        /**
          * Результат выполнения запроса
          *
          * @type LiteResponse
@@ -329,7 +356,7 @@ export namespace Templater {
                     }.bind(this),
                     async function (response : Response) : Promise<LiteResponse> {
                         const liteResponse : LiteResponse = await ApplyAjax.getLiteResponse(response);
-                        callbackError(liteResponse);
+                        callbackError && callbackError(liteResponse);
 
                         return liteResponse;
                     }) as Promise<LiteResponse>;
@@ -371,6 +398,10 @@ export namespace Templater {
 
             return promise.then(
                 function (formData : FormData) : Promise<Response | void> {
+                    if (!url && !form.getAttribute('action')) {
+                        throw Error('URL or form action must be filled.');
+                    }
+
                     return self.request(
                         url || form.getAttribute('action'),
                         formData,
@@ -496,6 +527,10 @@ export namespace Templater {
                 return item.trim();
             });
 
+            if (null === value || '' === value) {
+                value = object.getAttribute(`${this.DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
+            }
+
             ({matches, insertable} = ApplyAjax.isInsertable(['html'], matches));
             if (insertable) {
                 object.innerHTML = value;
@@ -519,12 +554,19 @@ export namespace Templater {
 
             ({matches, insertable} = ApplyAjax.isInsertable(['href'], matches));
             if (insertable) {
-                (object as HTMLAnchorElement).href = (object as HTMLAnchorElement).href + value;
+                (object as HTMLAnchorElement).href
+                    = decodeURI((object as HTMLAnchorElement).href).replace(`{${key}}`, value);
+            }
+
+            ({matches, insertable} = ApplyAjax.isInsertable(['action'], matches));
+            if (insertable) {
+                (object as HTMLFormElement).action
+                    = decodeURI((object as HTMLFormElement).action).replace(`{${key}}`, value);
             }
 
             ({matches, insertable} = ApplyAjax.isInsertable(['data-href'], matches));
             if (insertable) {
-                object.dataset.href = object.dataset.href + value;
+                object.dataset.href = decodeURI((object.dataset.href as string)).replace(`{${key}}`, value);
             }
 
             ({matches, insertable} = ApplyAjax.isInsertable(['val', 'value'], matches));
@@ -558,20 +600,29 @@ export namespace Templater {
             let self = this,
                 objects : HTMLElement[] = [];
 
+            if (!Array.isArray(data)) {
+                data = [data];
+            }
+
             if (object instanceof Element) {
                 objects.push(object);
             } else {
                 objects = Array.from(object) as HTMLElement[];
             }
 
+            objects.forEach(function (parent : HTMLElement) {
+                self.isShowNoData(data as Object[], parent);
+                self.dataDependsCheck(data, parent);
+            });
+
+            if (!data) {
+                return object;
+            }
+
             objects.forEach(function (item : HTMLElement) {
 
                 if (!item.classList.contains(self._HIDE_CLASS)) {
                     return self.setData(item, data);
-                }
-
-                if (!Array.isArray(data)) {
-                    data = [data];
                 }
 
                 (data as Object[]).forEach(function (record : Object) {
@@ -620,6 +671,10 @@ export namespace Templater {
                 self.modifyElement(object, prop, dataObject[prop]);
 
                 object.querySelectorAll(`[data-in-${prop}]`).forEach(function (item : HTMLElement) {
+                    if (!self.dataDependsCheck(dataObject[prop], item)) {
+                        return;
+                    }
+
                     self.modifyElement(item, prop, dataObject[prop]);
                 });
             });
@@ -627,6 +682,75 @@ export namespace Templater {
             object.classList.remove(this._HIDE_CLASS);
 
             return object;
+        }
+
+        /**
+         * Если данных нет, то прячет зависимые от этих данных элементы
+         *
+         * @param data
+         * @param {HTMLElement} element
+         *
+         * @returns {boolean}
+         */
+        protected dataDependsCheck(data : any, element : HTMLElement) : boolean {
+            if (data) {
+                return true;
+            }
+
+            let dependsParents : HTMLElement[],
+                self = this;
+            if (element.hasAttribute(this.DATA_DEPENDS_ON_ATTRIBUTE)) {
+                dependsParents = [element];
+            } else {
+                dependsParents = Utils.GoodFuncs.parents(element, `[${this.DATA_DEPENDS_ON_ATTRIBUTE}]`)
+                    .filter(function (parent : HTMLElement) {
+                        return element.matches(parent.getAttribute(self.DATA_DEPENDS_ON_ATTRIBUTE) || '');
+                    });
+            }
+
+            if (!dependsParents.length) {
+                return true;
+            }
+
+            dependsParents.forEach(function (parent : HTMLElement) {
+                parent.classList.add(self.NO_DISPLAY_CLASS);
+            });
+
+            return false;
+        }
+
+        /**
+         * Показать блок с сообщением об отсутствии данных, если данных нет
+         *
+         * @param {Object[]} data
+         * @param {HTMLElement} parent
+         *
+         * @returns {boolean}
+         */
+        protected isShowNoData(data : Object[], parent : HTMLElement) : boolean {
+            let p : Element | null = parent.closest(this.PARENT_SELECTOR),
+                noDataElement : HTMLElement | null = p ? p.querySelector(this.NO_DATA_SELECTOR) : null;
+
+            if (!noDataElement || !p) {
+                return true;
+            }
+
+            let self = this;
+            if (!data) {
+                Array.from(p.children).forEach(function (child) {
+                    child.classList.add(self.NO_DISPLAY_CLASS)
+                });
+                noDataElement.classList.remove(this.NO_DISPLAY_CLASS);
+
+                return false;
+            }
+
+            Array.from(p.children).forEach(function (child) {
+                child.classList.remove(self.NO_DISPLAY_CLASS)
+            });
+            noDataElement.classList.add(this.NO_DISPLAY_CLASS);
+
+            return true;
         }
     }
 }

@@ -1,4 +1,5 @@
 'use strict';
+import { Utils } from "/vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
 export var Templater;
 (function (Templater) {
     /**
@@ -41,6 +42,26 @@ export var Templater;
              * @type Params
              */
             this._DEFAULT_PARAMS = {};
+            /**
+             * @type {string}
+             */
+            this.DATA_DEPENDS_ON_ATTRIBUTE = 'data-depends-on';
+            /**
+             * @type {string}
+             */
+            this.DEFAULT_ATTRIBUTE_PREFIX = 'data-default-';
+            /**
+             * @type {string}
+             */
+            this.NO_DISPLAY_CLASS = 'no-display';
+            /**
+             * @type {string}
+             */
+            this.PARENT_SELECTOR = '.parent';
+            /**
+             * @type {string}
+             */
+            this.NO_DATA_SELECTOR = '.no-data';
             Object.keys(ApplyAjax._defaultSettings).forEach(function (option) {
                 this[option] = settings[option] || ApplyAjax._defaultSettings[option];
             }, this);
@@ -145,7 +166,7 @@ export var Templater;
                 return liteResponse;
             }.bind(this), async function (response) {
                 const liteResponse = await ApplyAjax.getLiteResponse(response);
-                callbackError(liteResponse);
+                callbackError && callbackError(liteResponse);
                 return liteResponse;
             });
         }
@@ -171,6 +192,9 @@ export var Templater;
                 reject();
             });
             return promise.then(function (formData) {
+                if (!url && !form.getAttribute('action')) {
+                    throw Error('URL or form action must be filled.');
+                }
                 return self.request(url || form.getAttribute('action'), formData, 'POST', callback, callbackError);
             });
         }
@@ -259,6 +283,9 @@ export var Templater;
             matches = matches.split(',').map(function (item) {
                 return item.trim();
             });
+            if (null === value || '' === value) {
+                value = object.getAttribute(`${this.DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
+            }
             ({ matches, insertable } = ApplyAjax.isInsertable(['html'], matches));
             if (insertable) {
                 object.innerHTML = value;
@@ -278,11 +305,17 @@ export var Templater;
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['href'], matches));
             if (insertable) {
-                object.href = object.href + value;
+                object.href
+                    = decodeURI(object.href).replace(`{${key}}`, value);
+            }
+            ({ matches, insertable } = ApplyAjax.isInsertable(['action'], matches));
+            if (insertable) {
+                object.action
+                    = decodeURI(object.action).replace(`{${key}}`, value);
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['data-href'], matches));
             if (insertable) {
-                object.dataset.href = object.dataset.href + value;
+                object.dataset.href = decodeURI(object.dataset.href).replace(`{${key}}`, value);
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['val', 'value'], matches));
             if (insertable) {
@@ -306,18 +339,25 @@ export var Templater;
                 return object;
             }
             let self = this, objects = [];
+            if (!Array.isArray(data)) {
+                data = [data];
+            }
             if (object instanceof Element) {
                 objects.push(object);
             }
             else {
                 objects = Array.from(object);
             }
+            objects.forEach(function (parent) {
+                self.isShowNoData(data, parent);
+                self.dataDependsCheck(data, parent);
+            });
+            if (!data) {
+                return object;
+            }
             objects.forEach(function (item) {
                 if (!item.classList.contains(self._HIDE_CLASS)) {
                     return self.setData(item, data);
-                }
-                if (!Array.isArray(data)) {
-                    data = [data];
                 }
                 data.forEach(function (record) {
                     let clone = item.cloneNode(true);
@@ -357,11 +397,71 @@ export var Templater;
                 }
                 self.modifyElement(object, prop, dataObject[prop]);
                 object.querySelectorAll(`[data-in-${prop}]`).forEach(function (item) {
+                    if (!self.dataDependsCheck(dataObject[prop], item)) {
+                        return;
+                    }
                     self.modifyElement(item, prop, dataObject[prop]);
                 });
             });
             object.classList.remove(this._HIDE_CLASS);
             return object;
+        }
+        /**
+         * Если данных нет, то прячет зависимые от этих данных элементы
+         *
+         * @param data
+         * @param {HTMLElement} element
+         *
+         * @returns {boolean}
+         */
+        dataDependsCheck(data, element) {
+            if (data) {
+                return true;
+            }
+            let dependsParents, self = this;
+            if (element.hasAttribute(this.DATA_DEPENDS_ON_ATTRIBUTE)) {
+                dependsParents = [element];
+            }
+            else {
+                dependsParents = Utils.GoodFuncs.parents(element, `[${this.DATA_DEPENDS_ON_ATTRIBUTE}]`)
+                    .filter(function (parent) {
+                    return element.matches(parent.getAttribute(self.DATA_DEPENDS_ON_ATTRIBUTE) || '');
+                });
+            }
+            if (!dependsParents.length) {
+                return true;
+            }
+            dependsParents.forEach(function (parent) {
+                parent.classList.add(self.NO_DISPLAY_CLASS);
+            });
+            return false;
+        }
+        /**
+         * Показать блок с сообщением об отсутствии данных, если данных нет
+         *
+         * @param {Object[]} data
+         * @param {HTMLElement} parent
+         *
+         * @returns {boolean}
+         */
+        isShowNoData(data, parent) {
+            let p = parent.closest(this.PARENT_SELECTOR), noDataElement = p ? p.querySelector(this.NO_DATA_SELECTOR) : null;
+            if (!noDataElement || !p) {
+                return true;
+            }
+            let self = this;
+            if (!data) {
+                Array.from(p.children).forEach(function (child) {
+                    child.classList.add(self.NO_DISPLAY_CLASS);
+                });
+                noDataElement.classList.remove(this.NO_DISPLAY_CLASS);
+                return false;
+            }
+            Array.from(p.children).forEach(function (child) {
+                child.classList.remove(self.NO_DISPLAY_CLASS);
+            });
+            noDataElement.classList.add(this.NO_DISPLAY_CLASS);
+            return true;
         }
     }
     /**
@@ -385,3 +485,4 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
+//# sourceMappingURL=ApplyAjax.js.map
