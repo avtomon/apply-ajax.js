@@ -1,5 +1,5 @@
 'use strict';
-import { Utils } from "/vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
+import { Utils } from "../../../../../vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
 export var Templater;
 (function (Templater) {
     /**
@@ -485,3 +485,4 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
+//# sourceMappingURL=ApplyAjax.js.map

@@ -1,6 +1,6 @@
 'use strict';
 
-import {Utils} from "/vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
+import {Utils} from "../../../../../vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
 
 export namespace Templater {
 
