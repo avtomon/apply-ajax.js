@@ -99,52 +99,67 @@ export declare namespace Templater {
          * Хост по умолчанию
          *
          * @type {string}
+         * @private
          */
         protected _HOST: string;
         /**
          * Класс для обозначения клонируемых элементов
          *
          * @type {string}
+         * @private
          */
         protected _HIDE_CLASS: string;
         /**
          * Хэндлер обработки ошибки
          *
          * @type ErrorCallback
+         * @private
          */
         protected _DEFAULT_ERROR_CALLBACK: ErrorCallback;
         /**
          * Настройки запроса
          *
          * @type Headers
+         * @private
          */
         protected _DEFAULT_HEADERS: Headers;
         /**
          * Параметры запроса по умолчанию
          *
          * @type Params
+         * @private
          */
         protected _DEFAULT_PARAMS: Params;
         /**
          * @type {string}
+         * @private
          */
-        protected DATA_DEPENDS_ON_ATTRIBUTE: string;
+        protected _DATA_DEPENDS_ON_ATTRIBUTE: string;
         /**
          * @type {string}
+         * @private
          */
-        protected DEFAULT_ATTRIBUTE_PREFIX: string;
+        protected _DEFAULT_ATTRIBUTE_PREFIX: string;
         /**
          * @type {string}
+         * @private
          */
-        protected NO_DISPLAY_CLASS: string;
+        protected _NO_DISPLAY_CLASS: string;
         /**
          * @type {string}
+         * @private
          */
-        protected PARENT_SELECTOR: string;
+        protected _PARENT_SELECTOR: string;
         /**
          * @type {string}
+         * @private
          */
-        protected NO_DATA_SELECTOR: string;
+        protected _NO_DATA_SELECTOR: string;
+        /**
+         * @type {string}
+         * @private
+         */
+        protected _SUBPARENT_SELECTOR: string;
         /**
          * Результат выполнения запроса
          *
@@ -239,6 +254,12 @@ export declare namespace Templater {
          * @returns {IMatches}
          */
         protected static isInsertable(labels: string[], matches: string[]): IMatches;
+        /**
+         * @param {string} html
+         *
+         * @returns {string}
+         */
+        protected stripHtml(html: string): string;
         /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *

@@ -1,6 +1,6 @@
 'use strict';
 
-import {Utils} from "../../../../../vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
+import {Utils} from "/vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
 
 export namespace Templater {
 
@@ -137,6 +137,7 @@ export namespace Templater {
          * Хост по умолчанию
          *
          * @type {string}
+         * @private
          */
         protected _HOST : string = '';
 
@@ -144,6 +145,7 @@ export namespace Templater {
          * Класс для обозначения клонируемых элементов
          *
          * @type {string}
+         * @private
          */
         protected _HIDE_CLASS : string = '';
 
@@ -151,6 +153,7 @@ export namespace Templater {
          * Хэндлер обработки ошибки
          *
          * @type ErrorCallback
+         * @private
          */
         protected _DEFAULT_ERROR_CALLBACK : ErrorCallback;
 
@@ -158,6 +161,7 @@ export namespace Templater {
          * Настройки запроса
          *
          * @type Headers
+         * @private
          */
         protected _DEFAULT_HEADERS : Headers;
 
@@ -165,33 +169,45 @@ export namespace Templater {
          * Параметры запроса по умолчанию
          *
          * @type Params
+         * @private
          */
         protected _DEFAULT_PARAMS : Params = {};
 
         /**
          * @type {string}
+         * @private
          */
-        protected DATA_DEPENDS_ON_ATTRIBUTE = 'data-depends-on';
+        protected _DATA_DEPENDS_ON_ATTRIBUTE = 'data-depends-on';
 
         /**
          * @type {string}
+         * @private
          */
-        protected DEFAULT_ATTRIBUTE_PREFIX = 'data-default-';
+        protected _DEFAULT_ATTRIBUTE_PREFIX = 'data-default-';
 
         /**
          * @type {string}
+         * @private
          */
-        protected NO_DISPLAY_CLASS = 'no-display';
+        protected _NO_DISPLAY_CLASS = 'no-display';
 
         /**
          * @type {string}
+         * @private
          */
-        protected PARENT_SELECTOR = '.parent';
+        protected _PARENT_SELECTOR = '.parent';
 
         /**
          * @type {string}
+         * @private
          */
-        protected NO_DATA_SELECTOR = '.no-data';
+        protected _NO_DATA_SELECTOR = '.no-data';
+
+        /**
+         * @type {string}
+         * @private
+         */
+        protected _SUBPARENT_SELECTOR = '.subparent';
 
         /**
          * Результат выполнения запроса
@@ -505,6 +521,19 @@ export namespace Templater {
         }
 
         /**
+         * @param {string} html
+         *
+         * @returns {string}
+         */
+        protected stripHtml(html : string) : string
+        {
+            let tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+
+            return tmp.textContent || tmp.innerText || '';
+        }
+
+        /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *
          * @param {HTMLElement} object - объект, в который вставляем
@@ -528,7 +557,7 @@ export namespace Templater {
             });
 
             if (null === value || '' === value) {
-                value = object.getAttribute(`${this.DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
+                value = object.getAttribute(`${this._DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
             }
 
             ({matches, insertable} = ApplyAjax.isInsertable(['html'], matches));
@@ -538,7 +567,7 @@ export namespace Templater {
 
             ({matches, insertable} = ApplyAjax.isInsertable(['text'], matches));
             if (insertable) {
-                object.innerText = value;
+                object.innerText = this.stripHtml(value);
             }
 
             ({matches, insertable} = ApplyAjax.isInsertable(['class'], matches));
@@ -572,6 +601,16 @@ export namespace Templater {
             ({matches, insertable} = ApplyAjax.isInsertable(['val', 'value'], matches));
             if (insertable) {
                 (object as FormElement).value = value;
+            }
+
+            ({matches, insertable} = ApplyAjax.isInsertable(['checked'], matches));
+            if (insertable) {
+                (object as HTMLInputElement).checked = Boolean(value);
+            }
+
+            ({matches, insertable} = ApplyAjax.isInsertable(['selected'], matches));
+            if (insertable) {
+                (object as HTMLOptionElement).selected = Boolean(value);
             }
 
             matches.forEach(function (attr : string) {
@@ -659,13 +698,13 @@ export namespace Templater {
             let self = this;
             Object.keys(dataObject).forEach(function (prop : string) {
                 if (dataObject[prop] instanceof Object) {
-                    self.setMultiData(object.querySelectorAll('.' + prop), dataObject[prop]);
+                    self.setMultiData(object.querySelectorAll(`${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
                     return;
                 }
 
                 if (ApplyAjax.isJson(dataObject[prop])) {
                     dataObject[prop] = JSON.parse(dataObject[prop]);
-                    self.setMultiData(object.querySelectorAll('.' + prop), dataObject[prop]);
+                    self.setMultiData(object.querySelectorAll(`${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
                 }
 
                 self.modifyElement(object, prop, dataObject[prop]);
@@ -699,12 +738,12 @@ export namespace Templater {
 
             let dependsParents : HTMLElement[],
                 self = this;
-            if (element.hasAttribute(this.DATA_DEPENDS_ON_ATTRIBUTE)) {
+            if (element.hasAttribute(this._DATA_DEPENDS_ON_ATTRIBUTE)) {
                 dependsParents = [element];
             } else {
-                dependsParents = Utils.GoodFuncs.parents(element, `[${this.DATA_DEPENDS_ON_ATTRIBUTE}]`)
+                dependsParents = Utils.GoodFuncs.parents(element, `[${this._DATA_DEPENDS_ON_ATTRIBUTE}]`)
                     .filter(function (parent : HTMLElement) {
-                        return element.matches(parent.getAttribute(self.DATA_DEPENDS_ON_ATTRIBUTE) || '');
+                        return element.matches(parent.getAttribute(self._DATA_DEPENDS_ON_ATTRIBUTE) || '');
                     });
             }
 
@@ -713,7 +752,7 @@ export namespace Templater {
             }
 
             dependsParents.forEach(function (parent : HTMLElement) {
-                parent.classList.add(self.NO_DISPLAY_CLASS);
+                parent.classList.add(self._NO_DISPLAY_CLASS);
             });
 
             return false;
@@ -728,8 +767,8 @@ export namespace Templater {
          * @returns {boolean}
          */
         protected isShowNoData(data : Object[], parent : HTMLElement) : boolean {
-            let p : Element | null = parent.closest(this.PARENT_SELECTOR),
-                noDataElement : HTMLElement | null = p ? p.querySelector(this.NO_DATA_SELECTOR) : null;
+            let p : Element | null = parent.closest(this._PARENT_SELECTOR),
+                noDataElement : HTMLElement | null = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
 
             if (!noDataElement || !p) {
                 return true;
@@ -738,17 +777,17 @@ export namespace Templater {
             let self = this;
             if (!data) {
                 Array.from(p.children).forEach(function (child) {
-                    child.classList.add(self.NO_DISPLAY_CLASS)
+                    child.classList.add(self._NO_DISPLAY_CLASS)
                 });
-                noDataElement.classList.remove(this.NO_DISPLAY_CLASS);
+                noDataElement.classList.remove(this._NO_DISPLAY_CLASS);
 
                 return false;
             }
 
             Array.from(p.children).forEach(function (child) {
-                child.classList.remove(self.NO_DISPLAY_CLASS)
+                child.classList.remove(self._NO_DISPLAY_CLASS)
             });
-            noDataElement.classList.add(this.NO_DISPLAY_CLASS);
+            noDataElement.classList.add(this._NO_DISPLAY_CLASS);
 
             return true;
         }
