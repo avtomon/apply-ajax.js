@@ -28,40 +28,53 @@ export var Templater;
              * Хост по умолчанию
              *
              * @type {string}
+             * @private
              */
             this._HOST = '';
             /**
              * Класс для обозначения клонируемых элементов
              *
              * @type {string}
+             * @private
              */
             this._HIDE_CLASS = '';
             /**
              * Параметры запроса по умолчанию
              *
              * @type Params
+             * @private
              */
             this._DEFAULT_PARAMS = {};
             /**
              * @type {string}
+             * @private
              */
-            this.DATA_DEPENDS_ON_ATTRIBUTE = 'data-depends-on';
+            this._DATA_DEPENDS_ON_ATTRIBUTE = 'data-depends-on';
             /**
              * @type {string}
+             * @private
              */
-            this.DEFAULT_ATTRIBUTE_PREFIX = 'data-default-';
+            this._DEFAULT_ATTRIBUTE_PREFIX = 'data-default-';
             /**
              * @type {string}
+             * @private
              */
-            this.NO_DISPLAY_CLASS = 'no-display';
+            this._NO_DISPLAY_CLASS = 'no-display';
             /**
              * @type {string}
+             * @private
              */
-            this.PARENT_SELECTOR = '.parent';
+            this._PARENT_SELECTOR = '.parent';
             /**
              * @type {string}
+             * @private
              */
-            this.NO_DATA_SELECTOR = '.no-data';
+            this._NO_DATA_SELECTOR = '.no-data';
+            /**
+             * @type {string}
+             * @private
+             */
+            this._SUBPARENT_SELECTOR = '.subparent';
             Object.keys(ApplyAjax._defaultSettings).forEach(function (option) {
                 this[option] = settings[option] || ApplyAjax._defaultSettings[option];
             }, this);
@@ -267,6 +280,16 @@ export var Templater;
             };
         }
         /**
+         * @param {string} html
+         *
+         * @returns {string}
+         */
+        stripHtml(html) {
+            let tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || '';
+        }
+        /**
          * Модифицирует jQuery-элемент вставляя строки value в места отмеченные маркерами с key.
          *
          * @param {HTMLElement} object - объект, в который вставляем
@@ -284,7 +307,7 @@ export var Templater;
                 return item.trim();
             });
             if (null === value || '' === value) {
-                value = object.getAttribute(`${this.DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
+                value = object.getAttribute(`${this._DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['html'], matches));
             if (insertable) {
@@ -292,7 +315,7 @@ export var Templater;
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['text'], matches));
             if (insertable) {
-                object.innerText = value;
+                object.innerText = this.stripHtml(value);
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['class'], matches));
             if (insertable) {
@@ -320,6 +343,14 @@ export var Templater;
             ({ matches, insertable } = ApplyAjax.isInsertable(['val', 'value'], matches));
             if (insertable) {
                 object.value = value;
+            }
+            ({ matches, insertable } = ApplyAjax.isInsertable(['checked'], matches));
+            if (insertable) {
+                object.checked = Boolean(value);
+            }
+            ({ matches, insertable } = ApplyAjax.isInsertable(['selected'], matches));
+            if (insertable) {
+                object.selected = Boolean(value);
             }
             matches.forEach(function (attr) {
                 object.setAttribute(attr, value);
@@ -388,12 +419,12 @@ export var Templater;
             let self = this;
             Object.keys(dataObject).forEach(function (prop) {
                 if (dataObject[prop] instanceof Object) {
-                    self.setMultiData(object.querySelectorAll('.' + prop), dataObject[prop]);
+                    self.setMultiData(object.querySelectorAll(`${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
                     return;
                 }
                 if (ApplyAjax.isJson(dataObject[prop])) {
                     dataObject[prop] = JSON.parse(dataObject[prop]);
-                    self.setMultiData(object.querySelectorAll('.' + prop), dataObject[prop]);
+                    self.setMultiData(object.querySelectorAll(`${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
                 }
                 self.modifyElement(object, prop, dataObject[prop]);
                 object.querySelectorAll(`[data-in-${prop}]`).forEach(function (item) {
@@ -419,20 +450,20 @@ export var Templater;
                 return true;
             }
             let dependsParents, self = this;
-            if (element.hasAttribute(this.DATA_DEPENDS_ON_ATTRIBUTE)) {
+            if (element.hasAttribute(this._DATA_DEPENDS_ON_ATTRIBUTE)) {
                 dependsParents = [element];
             }
             else {
-                dependsParents = Utils.GoodFuncs.parents(element, `[${this.DATA_DEPENDS_ON_ATTRIBUTE}]`)
+                dependsParents = Utils.GoodFuncs.parents(element, `[${this._DATA_DEPENDS_ON_ATTRIBUTE}]`)
                     .filter(function (parent) {
-                    return element.matches(parent.getAttribute(self.DATA_DEPENDS_ON_ATTRIBUTE) || '');
+                    return element.matches(parent.getAttribute(self._DATA_DEPENDS_ON_ATTRIBUTE) || '');
                 });
             }
             if (!dependsParents.length) {
                 return true;
             }
             dependsParents.forEach(function (parent) {
-                parent.classList.add(self.NO_DISPLAY_CLASS);
+                parent.classList.add(self._NO_DISPLAY_CLASS);
             });
             return false;
         }
@@ -445,22 +476,22 @@ export var Templater;
          * @returns {boolean}
          */
         isShowNoData(data, parent) {
-            let p = parent.closest(this.PARENT_SELECTOR), noDataElement = p ? p.querySelector(this.NO_DATA_SELECTOR) : null;
+            let p = parent.closest(this._PARENT_SELECTOR), noDataElement = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
             if (!noDataElement || !p) {
                 return true;
             }
             let self = this;
             if (!data) {
                 Array.from(p.children).forEach(function (child) {
-                    child.classList.add(self.NO_DISPLAY_CLASS);
+                    child.classList.add(self._NO_DISPLAY_CLASS);
                 });
-                noDataElement.classList.remove(this.NO_DISPLAY_CLASS);
+                noDataElement.classList.remove(this._NO_DISPLAY_CLASS);
                 return false;
             }
             Array.from(p.children).forEach(function (child) {
-                child.classList.remove(self.NO_DISPLAY_CLASS);
+                child.classList.remove(self._NO_DISPLAY_CLASS);
             });
-            noDataElement.classList.add(this.NO_DISPLAY_CLASS);
+            noDataElement.classList.add(this._NO_DISPLAY_CLASS);
             return true;
         }
     }
@@ -485,3 +516,4 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
+//# sourceMappingURL=ApplyAjax.js.map
