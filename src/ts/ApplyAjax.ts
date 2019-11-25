@@ -581,28 +581,6 @@ export namespace Templater {
                 });
             }
 
-            ({matches, insertable} = ApplyAjax.isInsertable(['href'], matches));
-            if (insertable) {
-                (object as HTMLAnchorElement).href
-                    = decodeURI((object as HTMLAnchorElement).href).replace(`{${key}}`, value);
-            }
-
-            ({matches, insertable} = ApplyAjax.isInsertable(['action'], matches));
-            if (insertable) {
-                (object as HTMLFormElement).action
-                    = decodeURI((object as HTMLFormElement).action).replace(`{${key}}`, value);
-            }
-
-            ({matches, insertable} = ApplyAjax.isInsertable(['data-href'], matches));
-            if (insertable) {
-                object.dataset.href = decodeURI((object.dataset.href as string)).replace(`{${key}}`, value);
-            }
-
-            ({matches, insertable} = ApplyAjax.isInsertable(['val', 'value'], matches));
-            if (insertable) {
-                (object as FormElement).value = value;
-            }
-
             ({matches, insertable} = ApplyAjax.isInsertable(['checked'], matches));
             if (insertable) {
                 (object as HTMLInputElement).checked = Boolean(value);
@@ -614,6 +592,12 @@ export namespace Templater {
             }
 
             matches.forEach(function (attr : string) {
+                const attrValue = object.getAttribute(attr);
+                if (attrValue && attrValue.includes(`{${key}}`)) {
+                    object.setAttribute(attr, attrValue.replace(new RegExp(`\{${key}\}`, 'g'), value));
+                    return;
+                }
+
                 object.setAttribute(attr, value);
             });
         }

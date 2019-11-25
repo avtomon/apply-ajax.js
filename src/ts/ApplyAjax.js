@@ -326,24 +326,6 @@ export var Templater;
                     object.classList.add(className);
                 });
             }
-            ({ matches, insertable } = ApplyAjax.isInsertable(['href'], matches));
-            if (insertable) {
-                object.href
-                    = decodeURI(object.href).replace(`{${key}}`, value);
-            }
-            ({ matches, insertable } = ApplyAjax.isInsertable(['action'], matches));
-            if (insertable) {
-                object.action
-                    = decodeURI(object.action).replace(`{${key}}`, value);
-            }
-            ({ matches, insertable } = ApplyAjax.isInsertable(['data-href'], matches));
-            if (insertable) {
-                object.dataset.href = decodeURI(object.dataset.href).replace(`{${key}}`, value);
-            }
-            ({ matches, insertable } = ApplyAjax.isInsertable(['val', 'value'], matches));
-            if (insertable) {
-                object.value = value;
-            }
             ({ matches, insertable } = ApplyAjax.isInsertable(['checked'], matches));
             if (insertable) {
                 object.checked = Boolean(value);
@@ -353,6 +335,11 @@ export var Templater;
                 object.selected = Boolean(value);
             }
             matches.forEach(function (attr) {
+                const attrValue = object.getAttribute(attr);
+                if (attrValue && attrValue.includes(`{${key}}`)) {
+                    object.setAttribute(attr, attrValue.replace(new RegExp(`\{${key}\}`, 'g'), value));
+                    return;
+                }
                 object.setAttribute(attr, value);
             });
         }
