@@ -751,7 +751,7 @@ export namespace Templater {
          * @returns {boolean}
          */
         protected isShowNoData(data : Object[], parent : HTMLElement) : boolean {
-            let p : Element | null = parent.closest(this._PARENT_SELECTOR),
+            let p : Element | null = parent.parentElement.closest(this._PARENT_SELECTOR),
                 noDataElement : HTMLElement | null = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
 
             if (!noDataElement || !p) {

@@ -463,7 +463,7 @@ export var Templater;
          * @returns {boolean}
          */
         isShowNoData(data, parent) {
-            let p = parent.closest(this._PARENT_SELECTOR), noDataElement = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
+            let p = parent.parentElement.closest(this._PARENT_SELECTOR), noDataElement = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
             if (!noDataElement || !p) {
                 return true;
             }
