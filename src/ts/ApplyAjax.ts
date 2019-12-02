@@ -126,7 +126,8 @@ export namespace Templater {
             },
             _DEFAULT_HEADERS: {
                 processData: true,
-                'X-REQUESTED-WITH': 'xmlhttprequest'
+                'X-REQUESTED-WITH': 'xmlhttprequest',
+                Accept: 'application/json'
             },
             _DEFAULT_PARAMS: {
                 XDEBUG_SESSION_START: 'PHPSTORM'
