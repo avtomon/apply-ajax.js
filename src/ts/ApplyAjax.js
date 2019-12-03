@@ -161,16 +161,16 @@ export var Templater;
             else {
                 params = rawParams instanceof FormData
                     ? rawParams
-                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                    : new URLSearchParams(Object.assign(Object.assign({}, this._DEFAULT_PARAMS), rawParams));
             }
             callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
             let options = {
                 method: method,
                 body: params,
                 credentials: 'include',
-                headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
+                headers: new Headers(Object.assign(Object.assign(Object.assign({}, this._DEFAULT_HEADERS), {
                     hash: location.hash.replace('#', '')
-                }, headers))
+                }), headers))
             };
             return fetch(urlObject.toString(), options)
                 .then(async function (response) {
@@ -504,4 +504,3 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
-//# sourceMappingURL=ApplyAjax.js.map
