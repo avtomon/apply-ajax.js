@@ -504,3 +504,4 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
+//# sourceMappingURL=ApplyAjax.js.map
