@@ -86,6 +86,10 @@ export declare namespace Templater {
          * @type Params
          */
         _DEFAULT_PARAMS?: Params;
+        /**
+         * Субдомен для отправки форм
+         */
+        _DEFAULT_SUBDOMAIN?: string;
     }
     /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
@@ -130,6 +134,13 @@ export declare namespace Templater {
          * @private
          */
         protected _DEFAULT_PARAMS: Params;
+        /**
+         * Субдомен для отправки форм
+         *
+         * @type {string}
+         * @private
+         */
+        protected _DEFAULT_SUBDOMAIN: string;
         /**
          * @type {string}
          * @private

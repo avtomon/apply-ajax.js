@@ -46,6 +46,13 @@ export var Templater;
              */
             this._DEFAULT_PARAMS = {};
             /**
+             * Субдомен для отправки форм
+             *
+             * @type {string}
+             * @private
+             */
+            this._DEFAULT_SUBDOMAIN = '';
+            /**
              * @type {string}
              * @private
              */
@@ -208,8 +215,10 @@ export var Templater;
                 if (!url && !form.getAttribute('action')) {
                     throw Error('URL or form action must be filled.');
                 }
-                const action = form.dataset.subdomain
-                    ? `${form.dataset.subdomain}.${location.hostname}${form.getAttribute('action')}`
+                const subdomain = form.dataset.subdomain !== undefined
+                    ? form.dataset.subdomain
+                    : self._DEFAULT_SUBDOMAIN, action = subdomain
+                    ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
                     : form.getAttribute('action');
                 return self.request(url || action, formData, 'POST', callback, callbackError);
             });
@@ -241,7 +250,11 @@ export var Templater;
          * @returns {Promise<Worker | void>}
          */
         async workerSubmit(form, before, callback, callbackError, url = null) {
+            const self = this;
             if (window['Worker']) {
+                if (!url && !form.getAttribute('action')) {
+                    throw Error('URL or form action must be filled.');
+                }
                 if (!this.worker) {
                     this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
                 }
@@ -250,8 +263,13 @@ export var Templater;
                 if (!result) {
                     return;
                 }
+                const subdomain = form.dataset.subdomain !== undefined
+                    ? form.dataset.subdomain
+                    : self._DEFAULT_SUBDOMAIN, action = subdomain
+                    ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                    : form.getAttribute('action');
                 this.worker.postMessage({
-                    url: url || form.action,
+                    url: url || action,
                     formData: ApplyAjax.formDataToObject(formData),
                     headers: this._DEFAULT_HEADERS
                 });
@@ -503,7 +521,8 @@ export var Templater;
         },
         _DEFAULT_PARAMS: {
             XDEBUG_SESSION_START: 'PHPSTORM'
-        }
+        },
+        _DEFAULT_SUBDOMAIN: 'save'
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));

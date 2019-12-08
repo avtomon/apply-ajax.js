@@ -106,6 +106,11 @@ export namespace Templater {
          * @type Params
          */
         _DEFAULT_PARAMS? : Params;
+
+        /**
+         * Субдомен для отправки форм
+         */
+        _DEFAULT_SUBDOMAIN? : string;
     }
 
     /**
@@ -131,7 +136,8 @@ export namespace Templater {
             },
             _DEFAULT_PARAMS: {
                 XDEBUG_SESSION_START: 'PHPSTORM'
-            }
+            },
+            _DEFAULT_SUBDOMAIN: 'save'
         };
 
         /**
@@ -173,6 +179,14 @@ export namespace Templater {
          * @private
          */
         protected _DEFAULT_PARAMS : Params = {};
+
+        /**
+         * Субдомен для отправки форм
+         *
+         * @type {string}
+         * @private
+         */
+        protected _DEFAULT_SUBDOMAIN = '';
 
         /**
          * @type {string}
@@ -419,9 +433,13 @@ export namespace Templater {
                         throw Error('URL or form action must be filled.');
                     }
 
-                    const action : string = form.dataset.subdomain
-                        ? `${form.dataset.subdomain}.${location.hostname}${form.getAttribute('action')}`
-                        : form.getAttribute('action') as string;
+                    const
+                        subdomain : string = form.dataset.subdomain !== undefined
+                            ? form.dataset.subdomain
+                            : self._DEFAULT_SUBDOMAIN,
+                        action : string = subdomain
+                            ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                            : form.getAttribute('action') as string;
 
                     return self.request(
                         url || action,
@@ -470,7 +488,12 @@ export namespace Templater {
             url : String | null = null
         ) : Promise<void> {
 
+            const self = this;
             if (window['Worker']) {
+
+                if (!url && !form.getAttribute('action')) {
+                    throw Error('URL or form action must be filled.');
+                }
 
                 if (!this.worker) {
                     this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
@@ -485,9 +508,17 @@ export namespace Templater {
                     return;
                 }
 
+                const
+                    subdomain : string = form.dataset.subdomain !== undefined
+                        ? form.dataset.subdomain
+                        : self._DEFAULT_SUBDOMAIN,
+                    action : string = subdomain
+                        ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                        : form.getAttribute('action') as string;
+
                 this.worker.postMessage(
                     {
-                        url: url || form.action,
+                        url: url || action,
                         formData: ApplyAjax.formDataToObject(formData),
                         headers: this._DEFAULT_HEADERS
                     }
@@ -530,8 +561,7 @@ export namespace Templater {
          *
          * @returns {string}
          */
-        protected stripHtml(html : string) : string
-        {
+        protected stripHtml(html : string) : string {
             let tmp = document.createElement("DIV");
             tmp.innerHTML = html;
 
