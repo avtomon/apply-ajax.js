@@ -224,9 +224,9 @@ export declare namespace Templater {
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
          * @param {string | null} url - адрес обработки
          *
-         * @returns {Promise<Response | void>}
+         * @returns {Promise<LiteResponse | void>}
          */
-        ajaxSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback, url?: String | null): Promise<Response | void>;
+        ajaxSubmit(form: HTMLFormElement, before?: BeforeCallback, callback?: OkCallback, callbackError?: ErrorCallback, url?: String | null): Promise<LiteResponse | void>;
         /**
          * Превратить объект FormData в обычный объект
          *

@@ -161,16 +161,16 @@ export var Templater;
             else {
                 params = rawParams instanceof FormData
                     ? rawParams
-                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                    : new URLSearchParams(Object.assign(Object.assign({}, this._DEFAULT_PARAMS), rawParams));
             }
             callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
             let options = {
                 method: method,
                 body: params,
                 credentials: 'include',
-                headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
+                headers: new Headers(Object.assign(Object.assign(Object.assign({}, this._DEFAULT_HEADERS), {
                     hash: location.hash.replace('#', '')
-                }, headers))
+                }), headers))
             };
             return fetch(urlObject.toString(), options)
                 .then(async function (response) {
@@ -192,7 +192,7 @@ export var Templater;
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
          * @param {string | null} url - адрес обработки
          *
-         * @returns {Promise<Response | void>}
+         * @returns {Promise<LiteResponse | void>}
          */
         ajaxSubmit(form, before, callback, callbackError, url = null) {
             let self = this;
@@ -208,7 +208,10 @@ export var Templater;
                 if (!url && !form.getAttribute('action')) {
                     throw Error('URL or form action must be filled.');
                 }
-                return self.request(url || form.getAttribute('action'), formData, 'POST', callback, callbackError);
+                const action = form.dataset.subdomain
+                    ? `${form.dataset.subdomain}.${location.hostname}${form.getAttribute('action')}`
+                    : form.getAttribute('action');
+                return self.request(url || action, formData, 'POST', callback, callbackError);
             });
         }
         ;
@@ -463,7 +466,7 @@ export var Templater;
          * @returns {boolean}
          */
         isShowNoData(data, parent) {
-            let p = parent.parentElement.closest(this._PARENT_SELECTOR), noDataElement = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
+            let p = parent.parentElement ? parent.parentElement.closest(this._PARENT_SELECTOR) : null, noDataElement = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
             if (!noDataElement || !p) {
                 return true;
             }
@@ -504,4 +507,3 @@ export var Templater;
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));
-//# sourceMappingURL=ApplyAjax.js.map

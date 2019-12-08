@@ -388,7 +388,7 @@ export namespace Templater {
          * @param {ErrorCallback} callbackError - коллбэк неудачной отправки формы
          * @param {string | null} url - адрес обработки
          *
-         * @returns {Promise<Response | void>}
+         * @returns {Promise<LiteResponse | void>}
          */
         public ajaxSubmit(
             form : HTMLFormElement,
@@ -396,7 +396,7 @@ export namespace Templater {
             callback? : OkCallback,
             callbackError? : ErrorCallback,
             url : String | null = null
-        ) : Promise<Response | void> {
+        ) : Promise<LiteResponse | void> {
 
             let self = this;
 
@@ -414,13 +414,17 @@ export namespace Templater {
             });
 
             return promise.then(
-                function (formData : FormData) : Promise<Response | void> {
+                function (formData : FormData) : Promise<LiteResponse | void> {
                     if (!url && !form.getAttribute('action')) {
                         throw Error('URL or form action must be filled.');
                     }
 
+                    const action : string = form.dataset.subdomain
+                        ? `${form.dataset.subdomain}.${location.hostname}${form.getAttribute('action')}`
+                        : form.getAttribute('action') as string;
+
                     return self.request(
-                        url || form.getAttribute('action'),
+                        url || action,
                         formData,
                         'POST',
                         callback,
@@ -752,7 +756,7 @@ export namespace Templater {
          * @returns {boolean}
          */
         protected isShowNoData(data : Object[], parent : HTMLElement) : boolean {
-            let p : Element | null = parent.parentElement.closest(this._PARENT_SELECTOR),
+            let p : Element | null = parent.parentElement ? parent.parentElement.closest(this._PARENT_SELECTOR) : null,
                 noDataElement : HTMLElement | null = p ? p.querySelector(this._NO_DATA_SELECTOR) : null;
 
             if (!noDataElement || !p) {
