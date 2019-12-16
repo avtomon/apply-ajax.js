@@ -5,7 +5,7 @@ export declare namespace Templater {
     /**
      * Кастомный объект ответа от сервера
      */
-    export class LiteResponse {
+    class LiteResponse {
         readonly data: Data;
         readonly ok: boolean;
         readonly status: number;
@@ -27,7 +27,7 @@ export declare namespace Templater {
     /**
      * Обработчик ошибки запроса
      */
-    export type ErrorCallback = (response: LiteResponse) => void;
+    type ErrorCallback = (response: LiteResponse) => void;
     /**
      * Параметры запроса на входе
      */
@@ -39,15 +39,15 @@ export declare namespace Templater {
     /**
      * Обработчик успешного зароса
      */
-    export type OkCallback = (response: LiteResponse) => void;
+    type OkCallback = (response: LiteResponse) => void;
     /**
      * Сигнатура функции выполняющейся перед отправкой запроса
      */
-    export type BeforeCallback = (formData: FormData) => Promise<boolean>;
+    type BeforeCallback = (formData: FormData) => Promise<boolean>;
     /**
      * Элементы формы
      */
-    export type FormElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    type FormElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     interface IMatches {
         matches: string[];
         insertable: boolean;
@@ -94,7 +94,7 @@ export declare namespace Templater {
     /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
      */
-    export class ApplyAjax {
+    class ApplyAjax {
         /**
          * Значения по умолчанию
          */
@@ -319,5 +319,4 @@ export declare namespace Templater {
          */
         protected isShowNoData(data: Object[], parent: HTMLElement): boolean;
     }
-    export {};
 }
