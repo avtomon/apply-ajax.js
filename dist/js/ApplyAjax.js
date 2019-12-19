@@ -218,7 +218,7 @@ export var Templater;
                 const subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
                     : self._DEFAULT_SUBDOMAIN, action = subdomain
-                    ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                    ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
                     : form.getAttribute('action');
                 return self.request(url || action, formData, 'POST', callback, callbackError);
             });
@@ -266,7 +266,7 @@ export var Templater;
                 const subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
                     : self._DEFAULT_SUBDOMAIN, action = subdomain
-                    ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                    ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
                     : form.getAttribute('action');
                 this.worker.postMessage({
                     url: url || action,

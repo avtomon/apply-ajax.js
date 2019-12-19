@@ -438,7 +438,7 @@ export namespace Templater {
                             ? form.dataset.subdomain
                             : self._DEFAULT_SUBDOMAIN,
                         action : string = subdomain
-                            ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                            ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
                             : form.getAttribute('action') as string;
 
                     return self.request(
@@ -513,7 +513,7 @@ export namespace Templater {
                         ? form.dataset.subdomain
                         : self._DEFAULT_SUBDOMAIN,
                     action : string = subdomain
-                        ? `${subdomain}.${location.hostname}${form.getAttribute('action')}`
+                        ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
                         : form.getAttribute('action') as string;
 
                 this.worker.postMessage(
