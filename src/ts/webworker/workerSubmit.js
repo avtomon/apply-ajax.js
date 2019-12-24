@@ -64,6 +64,7 @@ onmessage = async function (e) {
     fetch(url, options)
         .then(async function (response) {
         const isJson = response.headers.get('Content-Type').includes('application/json');
+        // @ts-ignore
         postMessage(new LiteResponse(isJson ? await response.json() : await response.text(), response.ok, response.status, isJson));
     });
 };
