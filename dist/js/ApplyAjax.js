@@ -53,6 +53,13 @@ export var Templater;
              */
             this._DEFAULT_SUBDOMAIN = '';
             /**
+             * Позиция субдомена в имени хоста
+             *
+             * @type {string}
+             * @private
+             */
+            this._DEFAULT_SUBDOMAIN_POSITION = 0;
+            /**
              * @type {string}
              * @private
              */
@@ -217,9 +224,16 @@ export var Templater;
                 }
                 const subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
-                    : self._DEFAULT_SUBDOMAIN, action = subdomain
-                    ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
-                    : form.getAttribute('action');
+                    : self._DEFAULT_SUBDOMAIN;
+                let action;
+                if (subdomain) {
+                    let hostnameParts = location.hostname.split('.');
+                    hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                    action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`;
+                }
+                else {
+                    action = form.getAttribute('action');
+                }
                 return self.request(url || action, formData, 'POST', callback, callbackError);
             });
         }
@@ -265,9 +279,16 @@ export var Templater;
                 }
                 const subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
-                    : self._DEFAULT_SUBDOMAIN, action = subdomain
-                    ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
-                    : form.getAttribute('action');
+                    : self._DEFAULT_SUBDOMAIN;
+                let action;
+                if (subdomain) {
+                    let hostnameParts = location.hostname.split('.');
+                    hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                    action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`;
+                }
+                else {
+                    action = form.getAttribute('action');
+                }
                 this.worker.postMessage({
                     url: url || action,
                     formData: ApplyAjax.formDataToObject(formData),
@@ -522,7 +543,8 @@ export var Templater;
         _DEFAULT_PARAMS: {
             XDEBUG_SESSION_START: 'PHPSTORM'
         },
-        _DEFAULT_SUBDOMAIN: 'save'
+        _DEFAULT_SUBDOMAIN: 'save',
+        _DEFAULT_SUBDOMAIN_POSITION: 1
     };
     Templater.ApplyAjax = ApplyAjax;
 })(Templater || (Templater = {}));

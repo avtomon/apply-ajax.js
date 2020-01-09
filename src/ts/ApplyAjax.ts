@@ -111,6 +111,11 @@ export namespace Templater {
          * Субдомен для отправки форм
          */
         _DEFAULT_SUBDOMAIN? : string;
+
+        /**
+         * Позиция субдомена в имени хоста
+         */
+        _DEFAULT_SUBDOMAIN_POSITION : number
     }
 
     /**
@@ -137,7 +142,8 @@ export namespace Templater {
             _DEFAULT_PARAMS: {
                 XDEBUG_SESSION_START: 'PHPSTORM'
             },
-            _DEFAULT_SUBDOMAIN: 'save'
+            _DEFAULT_SUBDOMAIN: 'save',
+            _DEFAULT_SUBDOMAIN_POSITION: 1
         };
 
         /**
@@ -187,6 +193,14 @@ export namespace Templater {
          * @private
          */
         protected _DEFAULT_SUBDOMAIN = '';
+
+        /**
+         * Позиция субдомена в имени хоста
+         *
+         * @type {string}
+         * @private
+         */
+        protected _DEFAULT_SUBDOMAIN_POSITION = 0;
 
         /**
          * @type {string}
@@ -436,10 +450,16 @@ export namespace Templater {
                     const
                         subdomain : string = form.dataset.subdomain !== undefined
                             ? form.dataset.subdomain
-                            : self._DEFAULT_SUBDOMAIN,
-                        action : string = subdomain
-                            ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
-                            : form.getAttribute('action') as string;
+                            : self._DEFAULT_SUBDOMAIN;
+
+                    let action : string;
+                    if (subdomain) {
+                        let hostnameParts = location.hostname.split('.');
+                        hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                        action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`
+                    } else {
+                        action = form.getAttribute('action') as string
+                    }
 
                     return self.request(
                         url || action,
@@ -511,10 +531,16 @@ export namespace Templater {
                 const
                     subdomain : string = form.dataset.subdomain !== undefined
                         ? form.dataset.subdomain
-                        : self._DEFAULT_SUBDOMAIN,
-                    action : string = subdomain
-                        ? `${location.protocol}//${subdomain}.${location.hostname}${form.getAttribute('action')}`
-                        : form.getAttribute('action') as string;
+                        : self._DEFAULT_SUBDOMAIN;
+
+                let action : string;
+                if (subdomain) {
+                    let hostnameParts = location.hostname.split('.');
+                    hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                    action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`
+                } else {
+                    action = form.getAttribute('action') as string
+                }
 
                 this.worker.postMessage(
                     {

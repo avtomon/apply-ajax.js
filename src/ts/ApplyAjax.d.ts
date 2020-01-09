@@ -90,6 +90,10 @@ export declare namespace Templater {
          * Субдомен для отправки форм
          */
         _DEFAULT_SUBDOMAIN?: string;
+        /**
+         * Позиция субдомена в имени хоста
+         */
+        _DEFAULT_SUBDOMAIN_POSITION: number;
     }
     /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
@@ -141,6 +145,13 @@ export declare namespace Templater {
          * @private
          */
         protected _DEFAULT_SUBDOMAIN: string;
+        /**
+         * Позиция субдомена в имени хоста
+         *
+         * @type {string}
+         * @private
+         */
+        protected _DEFAULT_SUBDOMAIN_POSITION: number;
         /**
          * @type {string}
          * @private
