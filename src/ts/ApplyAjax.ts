@@ -115,7 +115,7 @@ export namespace Templater {
         /**
          * Позиция субдомена в имени хоста
          */
-        _DEFAULT_SUBDOMAIN_POSITION : number
+        _DEFAULT_SUBDOMAIN_POSITION? : number
     }
 
     /**
@@ -359,6 +359,10 @@ export namespace Templater {
 
             let params : URLSearchParams | FormData | undefined = undefined;
             if (method === 'GET') {
+                if (rawParams instanceof FormData) {
+                    rawParams = Object.fromEntries(rawParams.entries());
+                }
+
                 Object.keys(rawParams).forEach(function (key) {
                     if (Array.isArray(rawParams[key])) {
                         for (let index in rawParams[key]) {
@@ -448,14 +452,20 @@ export namespace Templater {
                     }
 
                     const
+                        requestMethod = (form.getAttribute('method') || 'POST').toUpperCase() as RequestMethod,
                         subdomain : string = form.dataset.subdomain !== undefined
                             ? form.dataset.subdomain
                             : self._DEFAULT_SUBDOMAIN;
 
                     let action : string;
-                    if (subdomain) {
-                        let hostnameParts = location.hostname.split('.');
-                        hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                    if (subdomain && requestMethod === 'POST') {
+                        let hostnameParts = location.hostname.split('.'),
+                            position = self._DEFAULT_SUBDOMAIN_POSITION;
+                        if (hostnameParts.length === 2) {
+                            position = 0;
+                        }
+
+                        hostnameParts.splice(position, 0, subdomain);
                         action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`
                     } else {
                         action = form.getAttribute('action') as string
@@ -464,7 +474,7 @@ export namespace Templater {
                     return self.request(
                         url || action,
                         formData,
-                        'POST',
+                        requestMethod,
                         callback,
                         callbackError
                     );
@@ -529,14 +539,20 @@ export namespace Templater {
                 }
 
                 const
+                    requestMethod = (form.getAttribute('method') || 'POST').toUpperCase() as RequestMethod,
                     subdomain : string = form.dataset.subdomain !== undefined
                         ? form.dataset.subdomain
                         : self._DEFAULT_SUBDOMAIN;
 
                 let action : string;
-                if (subdomain) {
-                    let hostnameParts = location.hostname.split('.');
-                    hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                if (subdomain && requestMethod === 'POST') {
+                    let hostnameParts = location.hostname.split('.'),
+                        position = self._DEFAULT_SUBDOMAIN_POSITION;
+                    if (hostnameParts.length === 2) {
+                        position = 0;
+                    }
+
+                    hostnameParts.splice(position, 0, subdomain);
                     action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`
                 } else {
                     action = form.getAttribute('action') as string
@@ -777,7 +793,7 @@ export namespace Templater {
          * @returns {boolean}
          */
         protected dataDependsCheck(data : any, element : HTMLElement) : boolean {
-            if (data) {
+            if (null !== data) {
                 return true;
             }
 

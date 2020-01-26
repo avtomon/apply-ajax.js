@@ -1,7 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es2017",
+        "target": "es2019",
         "sourceMap": false,
         "alwaysStrict": true,
         "declaration": true,

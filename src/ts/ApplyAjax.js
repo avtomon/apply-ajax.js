@@ -228,7 +228,11 @@ export var Templater;
                 let action;
                 if (subdomain) {
                     let hostnameParts = location.hostname.split('.');
-                    hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                    let position = self._DEFAULT_SUBDOMAIN_POSITION;
+                    if (hostnameParts.length === 2) {
+                        position = 0;
+                    }
+                    hostnameParts.splice(position, 0, subdomain);
                     action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`;
                 }
                 else {
@@ -283,7 +287,11 @@ export var Templater;
                 let action;
                 if (subdomain) {
                     let hostnameParts = location.hostname.split('.');
-                    hostnameParts.splice(self._DEFAULT_SUBDOMAIN_POSITION, 0, subdomain);
+                    let position = self._DEFAULT_SUBDOMAIN_POSITION;
+                    if (hostnameParts.length === 2) {
+                        position = 0;
+                    }
+                    hostnameParts.splice(position, 0, subdomain);
                     action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`;
                 }
                 else {
