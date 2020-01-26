@@ -488,7 +488,7 @@ export var Templater;
          * @returns {boolean}
          */
         dataDependsCheck(data, element) {
-            if (null !== data) {
+            if (null !== data && (!Array.isArray(data) || (Array.isArray(data) && [] !== data))) {
                 return true;
             }
             let dependsParents, self = this;
