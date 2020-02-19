@@ -93,7 +93,7 @@ export declare namespace Templater {
         /**
          * Позиция субдомена в имени хоста
          */
-        _DEFAULT_SUBDOMAIN_POSITION: number;
+        _DEFAULT_SUBDOMAIN_POSITION?: number;
     }
     /**
      * Абстракция ajax-запросов к серверу + шаблонизация полученных данных.
