@@ -162,6 +162,9 @@ export var Templater;
             let urlObject = new URL(this._HOST + url);
             let params = undefined;
             if (method === 'GET') {
+                if (rawParams instanceof FormData) {
+                    rawParams = Object.fromEntries(rawParams.entries());
+                }
                 Object.keys(rawParams).forEach(function (key) {
                     if (Array.isArray(rawParams[key])) {
                         for (let index in rawParams[key]) {
@@ -222,13 +225,12 @@ export var Templater;
                 if (!url && !form.getAttribute('action')) {
                     throw Error('URL or form action must be filled.');
                 }
-                const subdomain = form.dataset.subdomain !== undefined
+                const requestMethod = (form.getAttribute('method') || 'POST').toUpperCase(), subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
                     : self._DEFAULT_SUBDOMAIN;
                 let action;
-                if (subdomain) {
-                    let hostnameParts = location.hostname.split('.');
-                    let position = self._DEFAULT_SUBDOMAIN_POSITION;
+                if (subdomain && requestMethod === 'POST') {
+                    let hostnameParts = location.hostname.split('.'), position = self._DEFAULT_SUBDOMAIN_POSITION;
                     if (hostnameParts.length === 2) {
                         position = 0;
                     }
@@ -238,7 +240,7 @@ export var Templater;
                 else {
                     action = form.getAttribute('action');
                 }
-                return self.request(url || action, formData, 'POST', callback, callbackError);
+                return self.request(url || action, formData, requestMethod, callback, callbackError);
             });
         }
         ;
@@ -281,13 +283,12 @@ export var Templater;
                 if (!result) {
                     return;
                 }
-                const subdomain = form.dataset.subdomain !== undefined
+                const requestMethod = (form.getAttribute('method') || 'POST').toUpperCase(), subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
                     : self._DEFAULT_SUBDOMAIN;
                 let action;
-                if (subdomain) {
-                    let hostnameParts = location.hostname.split('.');
-                    let position = self._DEFAULT_SUBDOMAIN_POSITION;
+                if (subdomain && requestMethod === 'POST') {
+                    let hostnameParts = location.hostname.split('.'), position = self._DEFAULT_SUBDOMAIN_POSITION;
                     if (hostnameParts.length === 2) {
                         position = 0;
                     }
@@ -483,7 +484,7 @@ export var Templater;
          * @returns {boolean}
          */
         dataDependsCheck(data, element) {
-            if (data) {
+            if (null !== data && (!Array.isArray(data) || (Array.isArray(data) && [] !== data))) {
                 return true;
             }
             let dependsParents, self = this;
