@@ -292,12 +292,22 @@ export var Templater;
                     : self._DEFAULT_SUBDOMAIN;
                 let action;
                 if (subdomain && requestMethod === 'POST') {
-                    let hostnameParts = location.hostname.split('.'), position = self._DEFAULT_SUBDOMAIN_POSITION;
+                    let protocol = ['https:', 'http:'].indexOf(location.protocol) !== -1
+                        ? location.protocol
+                        : window.parent.location.protocol, hostname = location.hostname || window.parent.location.hostname;
+                    // if (!hostname) {
+                    //     const
+                    //         url = location.ancestorOrigins[0],
+                    //         delimiterIndex = url.indexOf(':');
+                    //     protocol = url.substr(0, delimiterIndex + 1);
+                    //     hostname = url.substr(delimiterIndex + 3);
+                    // }
+                    let hostnameParts = hostname.split('.'), position = self._DEFAULT_SUBDOMAIN_POSITION;
                     if (hostnameParts.length === 2) {
                         position = 0;
                     }
                     hostnameParts.splice(position, 0, subdomain);
-                    action = `${location.protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`;
+                    action = `${protocol}//${hostnameParts.join('.')}${form.getAttribute('action')}`;
                 }
                 else {
                     action = form.getAttribute('action');
@@ -543,7 +553,7 @@ export var Templater;
     ApplyAjax._defaultSettings = {
         _HOST: window.location.origin && window.location.origin !== 'null'
             ? window.location.origin
-            : window.location.ancestorOrigins[0],
+            : window.parent.location.origin,
         _HIDE_CLASS: 'clone',
         _DEFAULT_ERROR_CALLBACK: function (liteResponse) {
             alert(liteResponse.data['message'] || 'Произошла ошибка');
