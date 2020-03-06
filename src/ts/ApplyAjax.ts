@@ -681,7 +681,7 @@ export namespace Templater {
             }
 
             matches.forEach(function (attr : string) {
-                const attrValue = object.getAttribute(attr);
+                const attrValue = decodeURI(object.getAttribute(attr) || '');
                 if (attrValue && attrValue.includes(`{${key}}`)) {
                     object.setAttribute(attr, attrValue.replace(new RegExp(`\{${key}\}`, 'g'), value));
                     return;
@@ -770,14 +770,13 @@ export namespace Templater {
 
             let self = this;
             Object.keys(dataObject).forEach(function (prop : string) {
-                if (dataObject[prop] instanceof Object) {
-                    self.setMultiData(object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
-                    return;
-                }
-
                 if (ApplyAjax.isJson(dataObject[prop])) {
                     dataObject[prop] = JSON.parse(dataObject[prop]);
+                }
+
+                if (dataObject[prop] instanceof Object || Array.isArray(dataObject[prop])) {
                     self.setMultiData(object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
+                    return;
                 }
 
                 self.modifyElement(object, prop, dataObject[prop]);

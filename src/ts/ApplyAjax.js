@@ -178,16 +178,20 @@ export var Templater;
             else {
                 params = rawParams instanceof FormData
                     ? rawParams
-                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                    : new URLSearchParams({ ...this._DEFAULT_PARAMS, ...rawParams });
             }
             callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
             let options = {
                 method: method,
                 body: params,
                 credentials: 'include',
-                headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
-                    hash: location.hash.replace('#', '')
-                }, headers))
+                headers: new Headers({
+                    ...this._DEFAULT_HEADERS,
+                    ...{
+                        hash: location.hash.replace('#', '')
+                    },
+                    ...headers
+                })
             };
             return fetch(urlObject.toString(), options)
                 .then(async function (response) {
@@ -396,7 +400,7 @@ export var Templater;
                 object.selected = Boolean(value);
             }
             matches.forEach(function (attr) {
-                const attrValue = object.getAttribute(attr);
+                const attrValue = decodeURI(object.getAttribute(attr) || '');
                 if (attrValue && attrValue.includes(`{${key}}`)) {
                     object.setAttribute(attr, attrValue.replace(new RegExp(`\{${key}\}`, 'g'), value));
                     return;
@@ -466,13 +470,12 @@ export var Templater;
             }
             let self = this;
             Object.keys(dataObject).forEach(function (prop) {
-                if (dataObject[prop] instanceof Object) {
-                    self.setMultiData(object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
-                    return;
-                }
                 if (ApplyAjax.isJson(dataObject[prop])) {
                     dataObject[prop] = JSON.parse(dataObject[prop]);
+                }
+                if (dataObject[prop] instanceof Object || Array.isArray(dataObject[prop])) {
                     self.setMultiData(object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
+                    return;
                 }
                 self.modifyElement(object, prop, dataObject[prop]);
                 object.querySelectorAll(`[data-in-${prop}]`).forEach(function (item) {
