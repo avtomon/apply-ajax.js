@@ -335,7 +335,7 @@ export var Templater;
         static isInsertable(labels, matches) {
             if (labels.filter(value => matches.includes(value)).length) {
                 return {
-                    matches: labels.filter(value => !matches.includes(value)),
+                    matches: matches.filter(value => !labels.includes(value)),
                     insertable: true
                 };
             }
