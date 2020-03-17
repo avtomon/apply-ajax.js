@@ -1,5 +1,5 @@
 'use strict';
-import { Utils } from "/vendor/avtomon/good-funcs.js/dist/js/GoodFuncs.js";
+import { Utils } from "../../../good-funcs.js/dist/js/GoodFuncs.js";
 export var Templater;
 (function (Templater) {
     /**
@@ -329,15 +329,16 @@ export var Templater;
          * @returns {IMatches}
          */
         static isInsertable(labels, matches) {
-            if (labels.filter(value => matches.includes(value)).length) {
+            const existedLabels = labels.filter(value => matches.includes(value));
+            if (existedLabels.length) {
                 return {
                     matches: matches.filter(value => !labels.includes(value)),
-                    insertable: true
+                    insertable: existedLabels
                 };
             }
             return {
                 matches: matches,
-                insertable: false
+                insertable: []
             };
         }
         /**
@@ -371,15 +372,15 @@ export var Templater;
                 value = object.getAttribute(`${this._DEFAULT_ATTRIBUTE_PREFIX}${key}`) || '';
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['html'], matches));
-            if (insertable) {
+            if (insertable.length) {
                 object.innerHTML = value;
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['text'], matches));
-            if (insertable) {
+            if (insertable.length) {
                 object.innerText = this.stripHtml(value);
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['class'], matches));
-            if (insertable) {
+            if (insertable.length) {
                 let classes = value.split(' ').map(function (item) {
                     return item.trim();
                 });
@@ -388,13 +389,24 @@ export var Templater;
                 });
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['checked'], matches));
-            if (insertable) {
+            if (insertable.length) {
                 object.checked = Boolean(value);
             }
             ({ matches, insertable } = ApplyAjax.isInsertable(['selected'], matches));
-            if (insertable) {
+            if (insertable.length) {
                 object.selected = Boolean(value);
             }
+            ({ matches, insertable } = ApplyAjax.isInsertable(['href', 'data-href'], matches));
+            insertable.forEach(function (attr) {
+                const attrValue = decodeURI(object.getAttribute(attr) || '');
+                if (attrValue) {
+                    if (attrValue.includes(`{${key}}`)) {
+                        object.setAttribute(attr, attrValue.replace(new RegExp(`\{${key}\}`, 'g'), value));
+                    }
+                    return;
+                }
+                object.setAttribute(attr, value);
+            });
             matches.forEach(function (attr) {
                 const attrValue = decodeURI(object.getAttribute(attr) || '');
                 if (attrValue && attrValue.includes(`{${key}}`)) {

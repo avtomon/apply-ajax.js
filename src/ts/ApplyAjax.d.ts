@@ -50,7 +50,7 @@ export declare namespace Templater {
     type FormElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     interface IMatches {
         matches: string[];
-        insertable: boolean;
+        insertable: string[];
     }
     /**
      * Интерфейс свойст класс ApplyAjax
