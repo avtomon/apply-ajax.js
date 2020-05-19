@@ -748,16 +748,16 @@ export namespace Templater {
 
             objects.forEach(function (item : HTMLElement) {
 
-                if (!item.classList.contains(self._HIDE_CLASS)) {
+                if (!item.classList.contains(self._HIDE_CLASS) || !item.parentElement) {
                     return self.setData(item, data);
                 }
 
                 (data as Object[]).forEach(function (record : Object) {
                     let clone : Node = item.cloneNode(true);
-                    if (item.parentElement) {
-                        self.setData(clone as HTMLElement, record);
-                        item.parentElement.appendChild(clone);
-                    }
+
+                    self.setData(clone as HTMLElement, record);
+                    item.after(clone);
+                    //item.parentElement.appendChild(clone);
                 });
             });
 
@@ -790,6 +790,12 @@ export namespace Templater {
                 }
 
                 if (dataObject[prop] instanceof Object || Array.isArray(dataObject[prop])) {
+                    object.querySelectorAll(
+                        `.${prop}${self._SUBPARENT_SELECTOR}:not(.${self._HIDE_CLASS})`
+                    ).forEach(function (element) {
+                        element.remove();
+                    });
+
                     self.setMultiData(object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
                     return;
                 }

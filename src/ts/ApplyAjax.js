@@ -447,15 +447,14 @@ export var Templater;
                 return object;
             }
             objects.forEach(function (item) {
-                if (!item.classList.contains(self._HIDE_CLASS)) {
+                if (!item.classList.contains(self._HIDE_CLASS) || !item.parentElement) {
                     return self.setData(item, data);
                 }
                 data.forEach(function (record) {
                     let clone = item.cloneNode(true);
-                    if (item.parentElement) {
-                        self.setData(clone, record);
-                        item.parentElement.appendChild(clone);
-                    }
+                    self.setData(clone, record);
+                    item.after(clone);
+                    //item.parentElement.appendChild(clone);
                 });
             });
             return object;
@@ -482,6 +481,9 @@ export var Templater;
                     dataObject[prop] = JSON.parse(dataObject[prop]);
                 }
                 if (dataObject[prop] instanceof Object || Array.isArray(dataObject[prop])) {
+                    object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}:not(.${self._HIDE_CLASS})`).forEach(function (element) {
+                        element.remove();
+                    });
                     self.setMultiData(object.querySelectorAll(`.${prop}${self._SUBPARENT_SELECTOR}`), dataObject[prop]);
                     return;
                 }
