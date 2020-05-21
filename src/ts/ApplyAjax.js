@@ -178,16 +178,20 @@ export var Templater;
             else {
                 params = rawParams instanceof FormData
                     ? rawParams
-                    : new URLSearchParams(Object.assign({}, this._DEFAULT_PARAMS, rawParams));
+                    : new URLSearchParams({ ...this._DEFAULT_PARAMS, ...rawParams });
             }
             callbackError = callbackError ? callbackError : this._DEFAULT_ERROR_CALLBACK;
             let options = {
                 method: method,
                 body: params,
                 credentials: 'include',
-                headers: new Headers(Object.assign({}, this._DEFAULT_HEADERS, {
-                    hash: location.hash.replace('#', '')
-                }, headers))
+                headers: new Headers({
+                    ...this._DEFAULT_HEADERS,
+                    ...{
+                        hash: location.hash.replace('#', '')
+                    },
+                    ...headers
+                })
             };
             return fetch(urlObject.toString(), options)
                 .then(async function (response) {
