@@ -826,7 +826,7 @@ export namespace Templater {
          */
         protected dataDependsCheck(data : any, element : HTMLElement) : boolean {
 
-            if (null !== data && (!Array.isArray(data) || (Array.isArray(data) && [] !== data))) {
+            if (null !== data && '' !== data && (!Array.isArray(data) || (Array.isArray(data) && [] !== data))) {
                 return true;
             }
 
