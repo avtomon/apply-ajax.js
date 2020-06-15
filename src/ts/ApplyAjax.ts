@@ -352,7 +352,7 @@ export namespace Templater {
         ) : Promise<LiteResponse | void> {
 
             if (!url) {
-                throw new Error('URL запроса не задан');
+                throw new Error('URL запроса не задан.');
             }
 
             let urlObject : URL = new URL(this._HOST + url);
@@ -448,7 +448,7 @@ export namespace Templater {
             return promise.then(
                 function (formData : FormData) : Promise<LiteResponse | void> {
                     if (!url && !form.getAttribute('action')) {
-                        throw Error('URL or form action must be filled.');
+                        throw Error('Свойство action формы не заполнено.');
                     }
 
                     const
@@ -522,7 +522,7 @@ export namespace Templater {
             if (window['Worker']) {
 
                 if (!url && !form.getAttribute('action')) {
-                    throw Error('URL or form action must be filled.');
+                    throw Error('Свойство action формы не заполнено.');
                 }
 
                 if (!this.worker) {
@@ -587,7 +587,7 @@ export namespace Templater {
                 return;
             }
 
-            throw new Error('Веб-воркеры не поддерживаются браузером');
+            throw new Error('Веб-воркеры не поддерживаются браузером.');
         };
 
         /**

@@ -57,19 +57,19 @@ onmessage = async function (e) {
         };
 
     if (!params) {
-        postError('Не были переданы необходимые параметры выполнения');
+        postError('Не были переданы необходимые параметры выполнения.');
         return;
     }
 
     let url : string = params['url'];
     if (!url) {
-        postError('Не был передан адрес обработчика отправки формы');
+        postError('Не был передан адрес обработчика отправки формы.');
         return;
     }
 
     let formData : Object = params['formData'];
     if (!formData || !Object.keys(formData).length) {
-        postError('Форма пуста');
+        postError('Форма пуста.');
         return;
     }
 
