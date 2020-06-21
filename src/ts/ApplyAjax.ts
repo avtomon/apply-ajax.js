@@ -1,6 +1,9 @@
 'use strict';
 
 import {Utils} from "../../../good-funcs.js/dist/js/GoodFuncs.js";
+import {Translate} from '../../../translate.js/dist/translate.js';
+
+const t = new Translate('../translates');
 
 export namespace Templater {
 
@@ -352,7 +355,7 @@ export namespace Templater {
         ) : Promise<LiteResponse | void> {
 
             if (!url) {
-                throw new Error('URL запроса не задан.');
+                throw new Error(t.translate('url-not-set'));
             }
 
             let urlObject : URL = new URL(this._HOST + url);
@@ -448,7 +451,7 @@ export namespace Templater {
             return promise.then(
                 function (formData : FormData) : Promise<LiteResponse | void> {
                     if (!url && !form.getAttribute('action')) {
-                        throw Error('Свойство action формы не заполнено.');
+                        throw Error(t.translate('action-not-set'));
                     }
 
                     const
@@ -587,7 +590,7 @@ export namespace Templater {
                 return;
             }
 
-            throw new Error('Веб-воркеры не поддерживаются браузером.');
+            throw new Error(t.translate('workers-not-supporting'));
         };
 
         /**

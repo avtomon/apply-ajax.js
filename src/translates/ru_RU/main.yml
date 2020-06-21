@@ -1,0 +1,6 @@
+url-not-set: URL запроса не задан.
+action-not-set: Свойство action формы не заполнено.
+workers-not-supporting: Веб-воркеры не поддерживаются браузером.
+required-params-not-found: Не были переданы необходимые параметры выполнения.
+form-handler-not-found: Не был передан адрес обработчика отправки формы.
+empty-form: Форма пуста.
