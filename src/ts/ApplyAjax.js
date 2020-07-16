@@ -1,5 +1,7 @@
 'use strict';
 import { Utils } from "../../../good-funcs.js/dist/js/GoodFuncs.js";
+import { Translate } from '../../../translate.js/dist/translate.js';
+const t = new Translate('../translates');
 export var Templater;
 (function (Templater) {
     /**
@@ -157,7 +159,7 @@ export var Templater;
          */
         async request(url, rawParams, method = 'POST', callback = null, callbackError = null, headers = null) {
             if (!url) {
-                throw new Error('URL запроса не задан');
+                throw new Error(t.translate('url-not-set'));
             }
             let urlObject = new URL(this._HOST + url);
             let params = undefined;
@@ -223,7 +225,7 @@ export var Templater;
             });
             return promise.then(function (formData) {
                 if (!url && !form.getAttribute('action')) {
-                    throw Error('URL or form action must be filled.');
+                    throw Error(t.translate('action-not-set'));
                 }
                 const requestMethod = (form.getAttribute('method') || 'POST').toUpperCase(), subdomain = form.dataset.subdomain !== undefined
                     ? form.dataset.subdomain
@@ -273,7 +275,7 @@ export var Templater;
             const self = this;
             if (window['Worker']) {
                 if (!url && !form.getAttribute('action')) {
-                    throw Error('URL or form action must be filled.');
+                    throw Error('Свойство action формы не заполнено.');
                 }
                 if (!this.worker) {
                     this.worker = new Worker("/vendor/avtomon/apply-ajax.js/dist/js/workerSubmit.js");
@@ -319,7 +321,7 @@ export var Templater;
                 }.bind(this);
                 return;
             }
-            throw new Error('Веб-воркеры не поддерживаются браузером');
+            throw new Error(t.translate('workers-not-supporting'));
         }
         ;
         /**

@@ -1,4 +1,6 @@
 'use strict';
+import { Translate } from '../../../../translate.js/dist/translate.js';
+const t = new Translate('../translates');
 /**
  * Добавить данные к форме
  *
@@ -41,17 +43,17 @@ onmessage = async function (e) {
         postMessage(new LiteResponse({ message: errorMessage }, false, 400));
     };
     if (!params) {
-        postError('Не были переданы необходимые параметры выполнения');
+        postError(t.translate('required-params-not-found'));
         return;
     }
     let url = params['url'];
     if (!url) {
-        postError('Не был передан адрес обработчика отправки формы');
+        postError(t.translate('form-handler-not-found'));
         return;
     }
     let formData = params['formData'];
     if (!formData || !Object.keys(formData).length) {
-        postError('Форма пуста');
+        postError(t.translate('empty-form'));
         return;
     }
     let body = addToForm(new FormData(), formData);
